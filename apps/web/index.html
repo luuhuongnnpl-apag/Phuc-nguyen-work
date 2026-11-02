@@ -3,35 +3,38 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#0b0b2a">
+  <meta name="theme-color" content="#1d5677">
   <meta name="description" content="Phúc Nguyên Work - Không gian quản lý lịch và công việc chuyên môn">
   <title>WORK'S CORNER | PHÚC NGUYÊN WORK</title>
   <link rel="icon" href="./logo.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@500;600;700;800;900&display=swap">
-  <link rel="stylesheet" href="./styles.css?v=20261102e">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Merriweather:wght@700;900&display=swap">
+  <link rel="stylesheet" href="./styles.css?v=20261102f">
 </head>
 <body>
   <div class="page">
-    <header class="masthead">
-      <img class="logo" src="./logo.png" alt="Phúc Nguyên Library — Research Law for Better Life">
-      <h1 class="title">WORK’S CORNER</h1>
-    </header>
+    <header class="band"><div class="band-in">
+      <div class="logo"><img src="./logo.png" alt="Logo Phúc Nguyên"></div>
+      <div class="titles"><div class="kicker">Phúc Nguyên Work</div><h1>Work’s Corner</h1><div class="copy">Lịch công tác theo tuần</div></div>
+    </div></header>
 
     <div class="workspace">
-      <nav class="sidebar" id="navigation" aria-label="Phân hệ công việc">
-        <button class="pill nav-item active" data-view="teaching">LỊCH GIẢNG</button>
-        <button class="pill nav-item" data-view="meetings">LỊCH HỌP</button>
-        <button class="pill nav-item" data-view="study">LỊCH HỌC</button>
-        <button class="pill nav-item" data-view="invigilation">COI THI</button>
-        <button class="pill nav-item" data-view="grading">CHẤM THI</button>
-        <button class="pill nav-item" data-view="research">NCKH</button>
-        <button class="pill nav-item" data-view="other">KHÁC</button>
-        <button class="pill nav-item" data-view="rmia">LỊCH R'MIA</button>
+      <nav class="frame sidebar" aria-label="Phân hệ công việc">
+        <h2 class="ftitle">Lịch</h2>
+        <div class="nav-list" id="navigation">
+        <button class="nav-item active" data-view="teaching">LỊCH GIẢNG</button>
+        <button class="nav-item" data-view="meetings">LỊCH HỌP</button>
+        <button class="nav-item" data-view="study">LỊCH HỌC</button>
+        <button class="nav-item" data-view="invigilation">COI THI</button>
+        <button class="nav-item" data-view="grading">CHẤM THI</button>
+        <button class="nav-item" data-view="research">NCKH</button>
+        <button class="nav-item" data-view="other">KHÁC</button>
+        <button class="nav-item" data-view="rmia">LỊCH R'MIA</button>
+        </div>
       </nav>
 
-      <main class="main">
-        <div class="section-pill pill" id="sectionTitle">LỊCH GIẢNG</div>
+      <main class="frame main">
+        <h2 class="ftitle" id="sectionTitle">LỊCH GIẢNG</h2>
 
         <div id="weekPanel" class="panel">
         <div class="table-wrap">
@@ -59,8 +62,8 @@
     </div>
   </div>
 
-  <script src="./data.js?v=20261102e"></script>
-  <script src="./rmia.js?v=20261102e"></script>
-  <script src="./app.js?v=20261102e"></script>
+  <script src="./data.js?v=20261102f"></script>
+  <script src="./rmia.js?v=20261102f"></script>
+  <script src="./app.js?v=20261102f"></script>
 </body>
 </html>

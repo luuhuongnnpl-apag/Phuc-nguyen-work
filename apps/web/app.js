@@ -138,7 +138,7 @@
     }
     if (state.classIndex >= RMIA.length) state.classIndex = 0;
     RMIA.forEach(function (k, i) {
-      var b = el("button", "pill class-btn" + (i === state.classIndex ? " active" : ""), k.name);
+      var b = el("button", "class-btn" + (i === state.classIndex ? " active" : ""), k.name);
       b.type = "button"; b.setAttribute("role", "tab");
       b.setAttribute("aria-selected", i === state.classIndex ? "true" : "false");
       b.addEventListener("click", function () { state.classIndex = i; renderTimetable(); });
