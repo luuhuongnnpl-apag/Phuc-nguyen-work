@@ -1,25 +1,27 @@
-const views = {
- dashboard:["Tổng quan","Tổng quan công việc","Theo dõi tiến độ và các nhiệm vụ cần triển khai.","Công việc gần đây"],
- tasks:["Công việc","Danh sách công việc","Quản lý nhiệm vụ, thời hạn, mức độ ưu tiên và người phụ trách.","Danh sách công việc"],
- projects:["Dự án & kế hoạch","Dự án và kế hoạch","Nhóm công việc theo mục tiêu và kết quả đầu ra.","Danh sách dự án"],
- calendar:["Lịch công việc","Lịch công việc","Theo dõi công việc theo tháng, tuần và ngày.","Lịch sắp tới"],
- kanban:["Bảng Kanban","Theo dõi tiến độ","Theo dõi trạng thái công việc theo từng giai đoạn.","Bảng tiến độ"],
- reports:["Báo cáo","Báo cáo và thống kê","Tổng hợp kết quả theo thời gian, nhóm nhiệm vụ và người phụ trách.","Báo cáo"]
+const views={
+ teaching:{label:"Lịch giảng",title:"LỊCH GIẢNG",description:"Theo dõi lịch giảng dạy theo tuần.",list:"CÔNG VIỆC TRONG TUẦN",empty:"Chưa có lịch giảng được ghi nhận."},
+ meetings:{label:"Lịch họp",title:"LỊCH HỌP",description:"Quản lý lịch họp chuyên môn, hội đồng và các cuộc họp công tác.",list:"CÁC CUỘC HỌP TRONG TUẦN",empty:"Chưa có lịch họp được ghi nhận."},
+ study:{label:"Lịch học",title:"LỊCH HỌC",description:"Theo dõi lịch học tập, bồi dưỡng và các chương trình đào tạo.",list:"LỊCH HỌC TRONG TUẦN",empty:"Chưa có lịch học được ghi nhận."},
+ invigilation:{label:"Coi thi",title:"LỊCH COI THI",description:"Theo dõi lịch coi thi, phòng thi và nhiệm vụ được phân công.",list:"CA COI THI TRONG TUẦN",empty:"Chưa có lịch coi thi được ghi nhận."},
+ grading:{label:"Chấm thi",title:"LỊCH CHẤM THI",description:"Quản lý kế hoạch chấm thi, hạn hoàn thành và tiến độ.",list:"ĐẦU VIỆC CHẤM THI",empty:"Chưa có nhiệm vụ chấm thi được ghi nhận."},
+ research:{label:"Nghiên cứu khoa học",title:"NGHIÊN CỨU KHOA HỌC",description:"Theo dõi đề tài, bài báo, hội thảo và các nhiệm vụ nghiên cứu.",list:"NHIỆM VỤ NGHIÊN CỨU TRONG TUẦN",empty:"Chưa có nhiệm vụ nghiên cứu được ghi nhận."},
+ other:{label:"Công việc khác",title:"CÔNG VIỆC KHÁC",description:"Theo dõi các nhiệm vụ chuyên môn và công tác phát sinh.",list:"CÔNG VIỆC KHÁC TRONG TUẦN",empty:"Chưa có công việc nào được ghi nhận."}
 };
-const title=document.querySelector("#pageTitle"),desc=document.querySelector("#pageDescription"),crumb=document.querySelector("#crumb"),section=document.querySelector("#sectionTitle");
-function activate(view){
- const data=views[view]||views.dashboard;
- document.querySelectorAll("[data-view]").forEach(el=>el.classList.toggle("active",el.dataset.view===view));
- crumb.textContent=data[0];title.textContent=data[1];desc.textContent=data[2];section.textContent=data[3];
+const $=s=>document.querySelector(s);
+function activate(key){
+ const v=views[key]||views.teaching;
+ document.querySelectorAll(".nav-item").forEach(b=>b.classList.toggle("active",b.dataset.view===key));
+ $("#crumb").textContent=v.label;$("#pageTitle").textContent=v.title;$("#pageDescription").textContent=v.description;
+ $("#scheduleTitle").textContent=v.title;$("#listTitle").textContent=v.list;$("#emptyHint").textContent=v.empty;
+ $("#dialogTitle").textContent="Thêm mục: "+v.label;
 }
-document.querySelector("#navigation").addEventListener("click",e=>{const b=e.target.closest("[data-view]");if(b)activate(b.dataset.view)});
-document.querySelectorAll(".text-button,.module-grid button").forEach(b=>b.addEventListener("click",()=>activate(b.dataset.view)));
-document.querySelector("#today").textContent=new Intl.DateTimeFormat("vi-VN",{weekday:"long",day:"2-digit",month:"2-digit",year:"numeric"}).format(new Date());
-document.querySelector("#newTask").addEventListener("click",()=>document.querySelector("#taskDialog").showModal());
+$("#navigation").addEventListener("click",e=>{const b=e.target.closest("[data-view]");if(b)activate(b.dataset.view)});
+document.querySelectorAll(".quick-links button").forEach(b=>b.addEventListener("click",()=>activate(b.dataset.view)));
+$("#today").textContent=new Intl.DateTimeFormat("vi-VN",{weekday:"long",day:"2-digit",month:"2-digit",year:"numeric"}).format(new Date());
+$("#newItem").addEventListener("click",()=>$("#itemDialog").showModal());
+$("#todayButton").addEventListener("click",()=>{const now=new Date();$("#weekLabel").textContent="TUẦN HIỆN TẠI · "+new Intl.DateTimeFormat("vi-VN",{day:"2-digit",month:"2-digit"}).format(now)});
+function shiftWeek(delta){const d=new Date();d.setDate(d.getDate()+delta*7);$("#weekLabel").textContent=new Intl.DateTimeFormat("vi-VN",{day:"2-digit",month:"2-digit",year:"numeric"}).format(d)}
+$("#prevWeek").addEventListener("click",()=>shiftWeek(-1));$("#nextWeek").addEventListener("click",()=>shiftWeek(1));
+document.querySelectorAll(".view-switch button").forEach(b=>b.addEventListener("click",()=>{document.querySelectorAll(".view-switch button").forEach(x=>x.classList.remove("selected"));b.classList.add("selected")}));
 const api=window.PNW_CONFIG?.apiBaseUrl;
-if(api){
- fetch(api.replace(/\/$/,"")+"/api/health").then(r=>{if(!r.ok)throw Error("API error");return r.json()}).then(data=>{
-  document.querySelector("#connectionText").textContent="API đã phản hồi";
-  document.querySelector(".connection i").style.background="#64c69b";
- }).catch(()=>document.querySelector("#connectionText").textContent="Không thể kết nối API");
-}
+if(api){fetch(api.replace(/\/$/,"")+"/api/health").then(r=>{if(!r.ok)throw Error("API error");return r.json()}).then(()=>{$("#connectionText").textContent="API đã phản hồi";$(".status-dot").style.background="#39a879"}).catch(()=>$("#connectionText").textContent="Không thể kết nối API")}
