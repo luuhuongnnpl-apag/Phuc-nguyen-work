@@ -10,3 +10,7 @@ migrations_dir = "../../database/migrations"
 
 [vars]
 APP_ORIGIN = "https://luuhuongnnpl-apag.github.io"
+APP_URL = "https://luuhuongnnpl-apag.github.io/Phuc-nguyen-work/"
+
+[triggers]
+crons = ["*/15 * * * *"]
