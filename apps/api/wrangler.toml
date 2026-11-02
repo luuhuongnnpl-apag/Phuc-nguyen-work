@@ -11,6 +11,7 @@ migrations_dir = "../../database/migrations"
 [vars]
 APP_ORIGIN = "https://luuhuongnnpl-apag.github.io"
 APP_URL = "https://luuhuongnnpl-apag.github.io/Phuc-nguyen-work/"
+BOOTSTRAP_ADMIN_GITHUB_ID = "348332521"
 
 [triggers]
 crons = ["*/15 * * * *"]
