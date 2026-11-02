@@ -6,7 +6,7 @@
     to    : ngày cuối tuần (Chủ nhật), dạng "YYYY-MM-DD"
     items : các ô lịch trong tuần
       day   : 1 = Thứ Hai, 2 = Thứ 3, ... 6 = Thứ 7, 7 = Chủ nhật
-      row   : dòng trong bảng (1 = dòng trên cùng)
+      row   : buổi — 1 = SÁNG (hàng trên), 2 = CHIỀU (hàng giữa), 3 = TỐI (hàng cuối)
       lines : các dòng chữ hiển thị trong ô
   Tuần mới nhất tự hiển thị trên cùng; tuần ban hành trước tự xếp
   xuống dòng dưới. Thêm tuần mới: chép một khối { from, to, items }.
@@ -19,9 +19,9 @@ window.PNW_DATA = {
       from: "2026-11-02",
       to: "2026-11-08",
       items: [
-        { day: 1, row: 1, lines: ["LUẬT DÂN SỰ", "2505LHOD", "20h00"] },
-        { day: 3, row: 1, lines: ["LUẬT ĐẤT ĐAI", "2405LHOA", "20h00"] },
-        { day: 5, row: 1, lines: ["LUẬT DÂN SỰ", "2505LHOA", "20h00"] }
+        { day: 1, row: 3, lines: ["LUẬT DÂN SỰ", "2505LHOD", "20h00"] },
+        { day: 3, row: 3, lines: ["LUẬT ĐẤT ĐAI", "2405LHOA", "20h00"] },
+        { day: 5, row: 3, lines: ["LUẬT DÂN SỰ", "2505LHOA", "20h00"] }
       ]
     }
   ],
@@ -39,8 +39,9 @@ window.PNW_DATA = {
       from: "2026-11-02",
       to: "2026-11-08",
       items: [
-        { day: 1, row: 1, lines: ["KIỂM SOÁT QUYỀN LỰC NHÀ NƯỚC", "Thầy Thái"] },
-        { day: 2, row: 1, lines: ["KIỂM SOÁT QUYỀN LỰC NHÀ NƯỚC", "Thầy Thái", "Buổi sáng"] }
+        { day: 1, row: 1, lines: ["KIỂM SOÁT QUYỀN LỰC NHÀ NƯỚC", "Thầy Thái", "8h30 - 11h00"] },
+        { day: 1, row: 2, lines: ["KIỂM SOÁT QUYỀN LỰC NHÀ NƯỚC", "Thầy Thái", "14h00 - 17h00"] },
+        { day: 2, row: 1, lines: ["KIỂM SOÁT QUYỀN LỰC NHÀ NƯỚC", "Thầy Thái", "8h30 - 11h00"] }
       ]
     }
   ],
