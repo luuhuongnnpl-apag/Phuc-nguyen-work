@@ -217,7 +217,7 @@
   // được ưu tiên hiển thị; dữ liệu tĩnh vẫn là phương án dự phòng khi offline.
   var apiBase = window.PNW_CONFIG && window.PNW_CONFIG.apiBaseUrl;
   if (apiBase) {
-    fetch(apiBase.replace(/\\/$/, "") + "/api/schedules", { credentials: "include" })
+    fetch((apiBase.endsWith("/") ? apiBase.slice(0,-1) : apiBase) + "/api/schedules", { credentials: "include" })
       .then(function (res) { if (!res.ok) throw new Error("schedule_api_unavailable"); return res.json(); })
       .then(function (data) {
         var grouped = {};
