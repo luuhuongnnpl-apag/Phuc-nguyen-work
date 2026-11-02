@@ -212,4 +212,38 @@
   });
 
   activate(location.hash.slice(1) || "teaching");
+
+  // Khi API được cấu hình và người dùng đã đăng nhập, lịch lưu trên D1
+  // được ưu tiên hiển thị; dữ liệu tĩnh vẫn là phương án dự phòng khi offline.
+  var apiBase = window.PNW_CONFIG && window.PNW_CONFIG.apiBaseUrl;
+  if (apiBase) {
+    fetch(apiBase.replace(/\\/$/, "") + "/api/schedules", { credentials: "include" })
+      .then(function (res) { if (!res.ok) throw new Error("schedule_api_unavailable"); return res.json(); })
+      .then(function (data) {
+        var grouped = {};
+        (data.items || []).forEach(function (item) {
+          var dt = new Date(item.start_at), day = (dt.getDay() + 6) % 7 + 1;
+          var monday = new Date(dt); monday.setHours(0,0,0,0); monday.setDate(monday.getDate() - day + 1);
+          var sunday = new Date(monday); sunday.setDate(sunday.getDate() + 6);
+          function iso(d) { return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+          var from = iso(monday), key = item.type + "|" + from;
+          if (!grouped[key]) grouped[key] = { from:from, to:iso(sunday), items:[] , type:item.type };
+          var hour = dt.getHours(), row = hour >= 17 ? 3 : (hour >= 12 ? 2 : 1);
+          var lines = [item.title];
+          if (item.location) lines.push(item.location);
+          lines.push(String(hour).padStart(2,"0")+":"+String(dt.getMinutes()).padStart(2,"0"));
+          grouped[key].items.push({ day:day, row:row, lines:lines });
+        });
+        Object.keys(grouped).forEach(function (key) {
+          var w = grouped[key], type = w.type;
+          if (!DATA[type]) DATA[type] = [];
+          DATA[type].push({ from:w.from, to:w.to, items:w.items });
+        });
+        Object.keys(DATA).forEach(function (type) {
+          if (Array.isArray(DATA[type])) DATA[type].sort(function(a,b){return parse(b.from)-parse(a.from);});
+        });
+        state.weekIndex = defaultWeekIndex(weeksOf(state.view));
+        render();
+      }).catch(function () {});
+  }
 })();
