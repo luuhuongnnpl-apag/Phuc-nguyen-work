@@ -6,7 +6,7 @@
   --grid:#1f4f7a; --today:#f4f8fc;
   --t-center:#e6eef8; --t-extra:#fdebdc; --t-extra-ink:#a8410c; --t-mark:#fff3a6;
   --f-display:"Merriweather",Georgia,"Times New Roman",serif;
-  --f-body:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --f-body:"Merriweather",Georgia,"Times New Roman",serif;
   color-scheme:light;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
