@@ -12,6 +12,9 @@ Không dùng Local Storage làm nguồn dữ liệu chính. Các màn hình chư
 - `docs`: kiến trúc, triển khai, kiểm thử.
 - `.github/workflows`: CI cơ bản.
 
+## Cập nhật lịch hằng tuần
+Mở `apps/web/data.js`, chép một khối `{ from, to, items }` vào phân hệ cần cập nhật và sửa nội dung. Tuần mới nhất tự hiển thị trên cùng, các tuần trước xếp xuống dưới.
+
 ## Phát triển
 Mở `apps/web/index.html` để xem bản giao diện cục bộ.
 Triển khai chính thức cần cấu hình Cloudflare D1, Worker secrets và xác thực OAuth.

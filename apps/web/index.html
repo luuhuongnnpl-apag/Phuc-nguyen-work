@@ -3,67 +3,53 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#10164b">
+  <meta name="theme-color" content="#0b0b2a">
   <meta name="description" content="Phúc Nguyên Work - Không gian quản lý lịch và công việc chuyên môn">
   <title>WORK'S CORNER | PHÚC NGUYÊN WORK</title>
+  <link rel="icon" href="./logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@500;600;700;800;900&display=swap">
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
-  <div class="app-shell">
+  <div class="page">
     <header class="masthead">
-      <div class="masthead-rail"></div>
-      <div class="seal" aria-label="Phúc Nguyên Library"><span class="seal-tree">✺</span><small>PHÚC NGUYÊN<br>LIBRARY</small></div>
-      <div class="masthead-title">WORK’S CORNER</div>
-      <div class="masthead-subtitle">PHÚC NGUYÊN WORKSPACE</div>
+      <img class="logo" src="./logo.png" alt="Phúc Nguyên Library — Research Law for Better Life">
+      <h1 class="title">WORK’S CORNER</h1>
     </header>
+
     <div class="workspace">
-      <aside class="sidebar">
-        <div class="sidebar-caption">KHÔNG GIAN CÔNG VIỆC</div>
-        <nav id="navigation" aria-label="Phân hệ công việc">
-          <button class="nav-item active" data-view="teaching"><span class="nav-icon">▦</span><span>LỊCH GIẢNG</span></button>
-          <button class="nav-item" data-view="meetings"><span class="nav-icon">▣</span><span>LỊCH HỌP</span></button>
-          <button class="nav-item" data-view="study"><span class="nav-icon">▤</span><span>LỊCH HỌC</span></button>
-          <button class="nav-item" data-view="invigilation"><span class="nav-icon">◈</span><span>COI THI</span></button>
-          <button class="nav-item" data-view="grading"><span class="nav-icon">✓</span><span>CHẤM THI</span></button>
-          <button class="nav-item" data-view="research"><span class="nav-icon">⌕</span><span>NCKH</span></button>
-          <button class="nav-item" data-view="other"><span class="nav-icon">＋</span><span>KHÁC</span></button>
-        </nav>
-        <div class="sidebar-foot"><span class="status-dot"></span><span id="connectionText">Chưa kết nối dữ liệu</span><small>PHÚC NGUYÊN WORK · 1.0</small></div>
-      </aside>
-      <main class="main-area">
-        <div class="topline">
-          <div class="breadcrumb">PHÚC NGUYÊN WORK <span>/</span> <strong id="crumb">Lịch giảng</strong></div>
-          <div class="topline-right"><span id="today"></span><span class="user-chip">PN</span></div>
+      <nav class="sidebar" id="navigation" aria-label="Phân hệ công việc">
+        <button class="pill nav-item active" data-view="teaching">LỊCH GIẢNG</button>
+        <button class="pill nav-item" data-view="meetings">LỊCH HỌP</button>
+        <button class="pill nav-item" data-view="study">LỊCH HỌC</button>
+        <button class="pill nav-item" data-view="invigilation">COI THI</button>
+        <button class="pill nav-item" data-view="grading">CHẤM THI</button>
+        <button class="pill nav-item" data-view="research">NCKH</button>
+        <button class="pill nav-item" data-view="other">KHÁC</button>
+      </nav>
+
+      <main class="main">
+        <div class="section-pill pill" id="sectionTitle">LỊCH GIẢNG</div>
+
+        <div class="table-wrap">
+          <table class="week-table" aria-describedby="weekCaption">
+            <caption id="weekCaption" class="sr-only">Lịch theo tuần</caption>
+            <thead>
+              <tr>
+                <th>THỨ HAI</th><th>THỨ 3</th><th>THỨ 4</th><th>THỨ 5</th><th>THỨ 6</th><th>THỨ 7</th><th>CHỦ NHẬT</th>
+              </tr>
+            </thead>
+            <tbody id="weekBody"></tbody>
+          </table>
         </div>
-        <section class="page-content">
-          <div class="page-heading">
-            <div><div class="eyebrow">PERSONAL WORKSPACE</div><h1 id="pageTitle">LỊCH GIẢNG</h1><p id="pageDescription">Theo dõi lịch giảng dạy theo tuần.</p></div>
-            <div class="heading-actions"><button class="outline-btn" id="todayButton">Hôm nay</button><button class="primary-btn" id="newItem">＋ Thêm lịch</button></div>
-          </div>
-          <div class="toolbar">
-            <div class="view-switch"><button class="selected">Tuần</button><button>Tháng</button><button>Danh sách</button></div>
-            <div class="week-control"><button aria-label="Tuần trước" id="prevWeek">‹</button><strong id="weekLabel">TUẦN HIỆN TẠI</strong><button aria-label="Tuần sau" id="nextWeek">›</button></div>
-          </div>
-          <section class="schedule-card">
-            <div class="schedule-title"><span id="scheduleTitle">LỊCH GIẢNG</span><span class="schedule-note">DỮ LIỆU THEO TUẦN</span></div>
-            <div class="week-grid" id="weekGrid">
-              <div class="day-head">THỨ HAI</div><div class="day-head">THỨ 3</div><div class="day-head">THỨ 4</div><div class="day-head">THỨ 5</div><div class="day-head">THỨ 6</div><div class="day-head">THỨ 7</div><div class="day-head">CHỦ NHẬT</div>
-              <div class="day-cell"></div><div class="day-cell"></div><div class="day-cell"></div><div class="day-cell"></div><div class="day-cell"></div><div class="day-cell"></div><div class="day-cell"></div>
-              <div class="day-cell"></div><div class="day-cell"></div><div class="day-cell"></div><div class="day-cell"></div><div class="day-cell"></div><div class="day-cell"></div><div class="day-cell"></div>
-              <div class="day-cell"></div><div class="day-cell"></div><div class="day-cell"></div><div class="day-cell"></div><div class="day-cell"></div><div class="day-cell"></div><div class="day-cell"></div>
-            </div>
-            <div class="empty-hint" id="emptyHint">Chưa có lịch được ghi nhận. Chọn “Thêm lịch” để tạo mục công việc đầu tiên.</div>
-          </section>
-          <div class="below-grid">
-            <section class="info-card"><div class="card-heading"><div><h2 id="listTitle">CÔNG VIỆC TRONG TUẦN</h2><p>Các lịch đã tạo sẽ được tổng hợp tại đây.</p></div><button class="link-btn" id="viewAll">Xem tất cả →</button></div><div class="empty-list"><span>▤</span><div><strong>Chưa có dữ liệu</strong><small>Các mục lịch sẽ hiển thị sau khi được kết nối và lưu thành công.</small></div></div></section>
-            <section class="info-card quick-card"><div class="card-heading"><div><h2>TRUY CẬP NHANH</h2><p>Chuyển nhanh giữa các phân hệ.</p></div></div><div class="quick-links"><button data-view="teaching">Lịch giảng <b>→</b></button><button data-view="meetings">Lịch họp <b>→</b></button><button data-view="research">Nghiên cứu khoa học <b>→</b></button></div></section>
-          </div>
-          <footer>PHÚC NGUYÊN WORK <span>•</span> HỆ THỐNG QUẢN LÝ VÀ THEO DÕI CÔNG VIỆC</footer>
-        </section>
+
+        <ul class="week-list" id="weekList" aria-label="Các tuần đã ban hành"></ul>
       </main>
     </div>
   </div>
-  <dialog id="itemDialog"><form method="dialog" class="dialog-card"><div class="dialog-head"><h2 id="dialogTitle">Thêm lịch công việc</h2><button class="close" value="cancel" aria-label="Đóng">×</button></div><p>Biểu mẫu nhập liệu sẽ được kích hoạt sau khi cấu hình máy chủ và cơ sở dữ liệu.</p><label>Tên công việc<input disabled placeholder="Chưa kết nối dữ liệu"></label><div class="dialog-actions"><button class="secondary" value="cancel">Đóng</button></div></form></dialog>
-  <script src="./config.js"></script><script src="./app.js"></script>
+
+  <script src="./data.js"></script>
+  <script src="./app.js"></script>
 </body>
 </html>

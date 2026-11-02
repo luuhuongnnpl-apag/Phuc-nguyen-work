@@ -1,27 +1,131 @@
-const views={
- teaching:{label:"Lịch giảng",title:"LỊCH GIẢNG",description:"Theo dõi lịch giảng dạy theo tuần.",list:"CÔNG VIỆC TRONG TUẦN",empty:"Chưa có lịch giảng được ghi nhận."},
- meetings:{label:"Lịch họp",title:"LỊCH HỌP",description:"Quản lý lịch họp chuyên môn, hội đồng và các cuộc họp công tác.",list:"CÁC CUỘC HỌP TRONG TUẦN",empty:"Chưa có lịch họp được ghi nhận."},
- study:{label:"Lịch học",title:"LỊCH HỌC",description:"Theo dõi lịch học tập, bồi dưỡng và các chương trình đào tạo.",list:"LỊCH HỌC TRONG TUẦN",empty:"Chưa có lịch học được ghi nhận."},
- invigilation:{label:"Coi thi",title:"LỊCH COI THI",description:"Theo dõi lịch coi thi, phòng thi và nhiệm vụ được phân công.",list:"CA COI THI TRONG TUẦN",empty:"Chưa có lịch coi thi được ghi nhận."},
- grading:{label:"Chấm thi",title:"LỊCH CHẤM THI",description:"Quản lý kế hoạch chấm thi, hạn hoàn thành và tiến độ.",list:"ĐẦU VIỆC CHẤM THI",empty:"Chưa có nhiệm vụ chấm thi được ghi nhận."},
- research:{label:"Nghiên cứu khoa học",title:"NGHIÊN CỨU KHOA HỌC",description:"Theo dõi đề tài, bài báo, hội thảo và các nhiệm vụ nghiên cứu.",list:"NHIỆM VỤ NGHIÊN CỨU TRONG TUẦN",empty:"Chưa có nhiệm vụ nghiên cứu được ghi nhận."},
- other:{label:"Công việc khác",title:"CÔNG VIỆC KHÁC",description:"Theo dõi các nhiệm vụ chuyên môn và công tác phát sinh.",list:"CÔNG VIỆC KHÁC TRONG TUẦN",empty:"Chưa có công việc nào được ghi nhận."}
-};
-const $=s=>document.querySelector(s);
-function activate(key){
- const v=views[key]||views.teaching;
- document.querySelectorAll(".nav-item").forEach(b=>b.classList.toggle("active",b.dataset.view===key));
- $("#crumb").textContent=v.label;$("#pageTitle").textContent=v.title;$("#pageDescription").textContent=v.description;
- $("#scheduleTitle").textContent=v.title;$("#listTitle").textContent=v.list;$("#emptyHint").textContent=v.empty;
- $("#dialogTitle").textContent="Thêm mục: "+v.label;
-}
-$("#navigation").addEventListener("click",e=>{const b=e.target.closest("[data-view]");if(b)activate(b.dataset.view)});
-document.querySelectorAll(".quick-links button").forEach(b=>b.addEventListener("click",()=>activate(b.dataset.view)));
-$("#today").textContent=new Intl.DateTimeFormat("vi-VN",{weekday:"long",day:"2-digit",month:"2-digit",year:"numeric"}).format(new Date());
-$("#newItem").addEventListener("click",()=>$("#itemDialog").showModal());
-$("#todayButton").addEventListener("click",()=>{const now=new Date();$("#weekLabel").textContent="TUẦN HIỆN TẠI · "+new Intl.DateTimeFormat("vi-VN",{day:"2-digit",month:"2-digit"}).format(now)});
-function shiftWeek(delta){const d=new Date();d.setDate(d.getDate()+delta*7);$("#weekLabel").textContent=new Intl.DateTimeFormat("vi-VN",{day:"2-digit",month:"2-digit",year:"numeric"}).format(d)}
-$("#prevWeek").addEventListener("click",()=>shiftWeek(-1));$("#nextWeek").addEventListener("click",()=>shiftWeek(1));
-document.querySelectorAll(".view-switch button").forEach(b=>b.addEventListener("click",()=>{document.querySelectorAll(".view-switch button").forEach(x=>x.classList.remove("selected"));b.classList.add("selected")}));
-const api=window.PNW_CONFIG?.apiBaseUrl;
-if(api){fetch(api.replace(/\/$/,"")+"/api/health").then(r=>{if(!r.ok)throw Error("API error");return r.json()}).then(()=>{$("#connectionText").textContent="API đã phản hồi";$(".status-dot").style.background="#39a879"}).catch(()=>$("#connectionText").textContent="Không thể kết nối API")}
+(function () {
+  "use strict";
+
+  var TITLES = {
+    teaching: "LỊCH GIẢNG",
+    meetings: "LỊCH HỌP",
+    study: "LỊCH HỌC",
+    invigilation: "COI THI",
+    grading: "CHẤM THI",
+    research: "NCKH",
+    other: "KHÁC"
+  };
+  var MIN_ROWS = 3;
+  var DATA = window.PNW_DATA || {};
+
+  var $ = function (s) { return document.querySelector(s); };
+  var state = { view: "teaching", weekIndex: 0 };
+
+  function parse(d) { var p = d.split("-"); return new Date(+p[0], +p[1] - 1, +p[2]); }
+  function fmt(d) {
+    var x = parse(d);
+    return String(x.getDate()).padStart(2, "0") + "/" + String(x.getMonth() + 1).padStart(2, "0") + "/" + x.getFullYear();
+  }
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+
+  // Tuần mới nhất lên đầu, tuần ban hành trước xếp xuống dưới
+  function weeksOf(view) {
+    return (DATA[view] || []).slice().sort(function (a, b) { return parse(b.from) - parse(a.from); });
+  }
+
+  function defaultWeekIndex(weeks) {
+    var now = new Date(); now.setHours(0, 0, 0, 0);
+    for (var i = 0; i < weeks.length; i++) {
+      if (parse(weeks[i].from) <= now && now <= parse(weeks[i].to)) return i;
+    }
+    return 0;
+  }
+
+  function todayColumn(week) {
+    if (!week) return -1;
+    var now = new Date(); now.setHours(0, 0, 0, 0);
+    var start = parse(week.from), end = parse(week.to);
+    if (now < start || now > end) return -1;
+    return Math.round((now - start) / 86400000) + 1;
+  }
+
+  function renderTable(week) {
+    var body = $("#weekBody");
+    body.innerHTML = "";
+    var items = week ? week.items || [] : [];
+    var rows = MIN_ROWS;
+    items.forEach(function (it) { if (it.row > rows) rows = it.row; });
+    var tcol = todayColumn(week);
+
+    for (var r = 1; r <= rows; r++) {
+      var tr = el("tr");
+      for (var d = 1; d <= 7; d++) {
+        var td = el("td");
+        if (d === tcol) td.classList.add("today-col");
+        items.filter(function (it) { return it.day === d && it.row === r; }).forEach(function (it) {
+          td.classList.add("filled");
+          (it.lines || []).forEach(function (line, i) {
+            td.appendChild(el("div", i === 0 ? "first" : "", line));
+          });
+        });
+        tr.appendChild(td);
+      }
+      body.appendChild(tr);
+    }
+
+    if (!week) {
+      var n = el("tr", "notice");
+      var c = el("td", "", "Chưa có lịch được ban hành.");
+      c.colSpan = 7; n.appendChild(c); body.appendChild(n);
+    }
+  }
+
+  function renderWeekList(weeks) {
+    var list = $("#weekList");
+    list.innerHTML = "";
+    if (!weeks.length) return;
+    weeks.forEach(function (w, i) {
+      var li = el("li");
+      var b = el("button", "week-btn" + (i === state.weekIndex ? " active" : ""));
+      b.type = "button";
+      b.setAttribute("aria-pressed", i === state.weekIndex ? "true" : "false");
+      var label = el("span", "label");
+      label.appendChild(document.createTextNode("- Tuần từ " + fmt(w.from) + " - "));
+      label.appendChild(el("span", "to", fmt(w.to)));
+      b.appendChild(label);
+      b.addEventListener("click", function () { state.weekIndex = i; render(); });
+      li.appendChild(b);
+      list.appendChild(li);
+    });
+  }
+
+  function render() {
+    var weeks = weeksOf(state.view);
+    if (state.weekIndex >= weeks.length) state.weekIndex = 0;
+    var week = weeks[state.weekIndex];
+    $("#sectionTitle").textContent = TITLES[state.view];
+    $("#weekCaption").textContent = TITLES[state.view] + (week ? " — tuần " + fmt(week.from) + " đến " + fmt(week.to) : "");
+    document.querySelectorAll(".nav-item").forEach(function (b) {
+      var on = b.dataset.view === state.view;
+      b.classList.toggle("active", on);
+      b.setAttribute("aria-current", on ? "page" : "false");
+    });
+    renderTable(week);
+    renderWeekList(weeks);
+  }
+
+  function activate(view) {
+    if (!TITLES[view]) view = "teaching";
+    state.view = view;
+    state.weekIndex = defaultWeekIndex(weeksOf(view));
+    if (location.hash.slice(1) !== view) history.replaceState(null, "", "#" + view);
+    render();
+  }
+
+  $("#navigation").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-view]");
+    if (b) activate(b.dataset.view);
+  });
+
+  activate(location.hash.slice(1) || "teaching");
+})();
