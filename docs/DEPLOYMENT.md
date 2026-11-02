@@ -44,7 +44,7 @@ npx wrangler deploy
 ```
 Sau khi deploy, sao chép URL Worker (ví dụ dạng https://phuc-nguyen-work-api.<subdomain>.workers.dev) và cập nhật apiBaseUrl trong apps/web/config.js. Đây là URL công khai, không phải secret. Commit thay đổi để GitHub Pages tự triển khai frontend.
 
-Cookie phiên làm việc được phát hành từ Worker với thuộc tính HttpOnly, Secure, SameSite=None để frontend GitHub Pages có thể gửi cookie trong yêu cầu có credentials. CORS chỉ cho phép origin được khai báo tại APP_ORIGIN.
+Cookie phiên làm việc được phát hành từ Worker với thuộc tính HttpOnly, Secure, SameSite=None để frontend GitHub Pages có thể gửi cookie trong yêu cầu có credentials. CORS chỉ cho phép origin được khai báo tại APP_ORIGIN. Do GitHub Pages và workers.dev khác site, một số trình duyệt (đặc biệt Safari với cơ chế hạn chế cookie bên thứ ba) có thể chặn phiên đăng nhập. Trước khi dùng chính thức trên iPhone/iPad, cần kiểm thử OAuth và cookie trên Safari; nếu bị chặn, nên đưa frontend và API về cùng một tên miền riêng do đơn vị quản lý.
 
 ## 5. Nhắc việc qua email (tùy chọn)
 Tạo tài khoản Resend và xác minh domain gửi thư. Cấu hình:
@@ -59,7 +59,10 @@ Cron trong apps/api/wrangler.toml chạy mỗi 15 phút. Nhắc việc kênh in-
 - member: tạo công việc/lịch; xem và cập nhật nhiệm vụ do mình tạo hoặc được phân công.
 - viewer: chỉ xem dữ liệu, không tạo/sửa/xóa.
 
-## 7. Kiểm thử trước khi đưa vào sử dụng
+## 7. Dữ liệu và quyền riêng tư
+Repository hiện ở chế độ public. Không đưa lịch cá nhân, thông tin nhân sự, nội dung công việc mật hoặc dữ liệu nội bộ vào apps/web/data.js vì đây là tệp tĩnh công khai. Dữ liệu nghiệp vụ cần lưu qua API trong D1 và chỉ truy cập sau xác thực. Cân nhắc chuyển repository sang private nếu mã nguồn hoặc tài liệu nội bộ không được công khai.
+
+## 8. Kiểm thử trước khi đưa vào sử dụng
 - GitHub Actions CI phải hoàn thành thành công.
 - Đăng nhập GitHub, kiểm tra hồ sơ và đăng xuất.
 - Tạo/sửa/xóa công việc và lịch; tải lại trang và đăng nhập lại để xác nhận dữ liệu còn nguyên.
