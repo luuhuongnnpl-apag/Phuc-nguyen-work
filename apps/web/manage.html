@@ -17,5 +17,5 @@
 <label>Tiến độ (%)<input type="number" min="0" max="100" id="fProgress" value="0"></label>
 <label>Ngày bắt đầu<input type="date" id="fStart"></label><label>Hạn hoàn thành<input type="date" id="fDue"></label>
 <label id="startAtWrap" hidden>Thời điểm bắt đầu<input type="datetime-local" id="fStartAt"></label><label id="endAtWrap" hidden>Thời điểm kết thúc<input type="datetime-local" id="fEndAt"></label><label id="locationWrap" class="wide" hidden>Địa điểm<input id="fLocation"></label>
-<label class="wide">Mô tả<textarea rows="3" id="fDescription"></textarea></label></div><p class="form-error" id="formError"></p><div class="dialog-actions"><button type="button" class="secondary-action" id="cancelDialog">Hủy</button><button type="submit" class="primary-action">Lưu</button></div></form></dialog>
+<label class="wide" id="assigneeWrap" hidden>Giao việc cho thành viên<select id="fAssignees" multiple size="4"></select></label><label class="wide">Mô tả<textarea rows="3" id="fDescription"></textarea></label></div><p class="form-error" id="formError"></p><div class="dialog-actions"><button type="button" class="secondary-action" id="cancelDialog">Hủy</button><button type="submit" class="primary-action">Lưu</button></div></form></dialog>
 <script src="./config.js"></script><script src="./manage.js"></script></body></html>
