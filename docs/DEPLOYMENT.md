@@ -17,7 +17,7 @@ Sao chép database_id Cloudflare trả về vào database_id trong apps/api/wran
 ```bash
 npx wrangler d1 migrations apply phuc-nguyen-work --remote
 ```
-Migration 0001 tạo users, roles, projects, tasks, documents, sessions và activity log. Migration 0002 tạo schedules và reminders. Không xóa hoặc tạo lại database khi cập nhật ứng dụng.
+Migration 0001 tạo users, roles, projects, tasks, documents, sessions và activity log. Migration 0002 tạo schedules và reminders; migration 0003 khởi tạo bảy nhóm công việc mặc định. Không xóa hoặc tạo lại database khi cập nhật ứng dụng.
 
 ## 3. Cấu hình GitHub OAuth
 Tạo OAuth App tại GitHub Developer Settings:
