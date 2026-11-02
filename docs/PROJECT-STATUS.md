@@ -14,7 +14,7 @@
 ## 2026-11-03 — Triển khai nghiệp vụ quản lý
 - Bổ sung API GitHub OAuth, session cookie bảo mật và kiểm tra quyền ở máy chủ.
 - Bổ sung CRUD công việc, CRUD lịch, phân công thành viên, báo cáo tổng hợp, nhắc việc và nhật ký hoạt động.
-- Bổ sung migration 0002 cho schedules và reminders.
+- Bổ sung migration 0002 cho schedules/reminders và migration 0003 khởi tạo bảy nhóm công việc.
 - Bổ sung trang manage.html: danh sách, tìm kiếm/lọc, biểu mẫu công việc/lịch, phân công, báo cáo và nhắc việc.
 - Bổ sung cron 15 phút để gửi email nhắc việc khi cấu hình Resend.
 - Lịch từ D1 có thể đồng bộ vào bảng lịch tuần sau khi API được cấu hình và người dùng đăng nhập.
