@@ -1,0 +1,23 @@
+name: Validate repository
+on:
+  push:
+    branches: [main, "feature/**"]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check required files
+        run: |
+          test -s README.md
+          test -s apps/web/index.html
+          test -s apps/api/src/index.js
+          test -s database/migrations/0001_initial_schema.sql
+      - name: Validate JavaScript syntax
+        run: |
+          node --check apps/web/app.js
+          node --check apps/api/src/index.js
