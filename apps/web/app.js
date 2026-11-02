@@ -51,7 +51,21 @@
     return Math.round((now - start) / 86400000) + 1;
   }
 
+  var DAY_NAMES = ["THỨ HAI", "THỨ 3", "THỨ 4", "THỨ 5", "THỨ 6", "THỨ 7", "CHỦ NHẬT"];
+  function renderHeads(week) {
+    document.querySelectorAll(".week-table th.dh").forEach(function (th, i) {
+      th.innerHTML = "";
+      th.appendChild(el("div", "dname", DAY_NAMES[i]));
+      if (week) {
+        var d = parse(week.from); d.setDate(d.getDate() + i);
+        var s = String(d.getDate()).padStart(2, "0") + "/" + String(d.getMonth() + 1).padStart(2, "0") + "/" + d.getFullYear();
+        th.appendChild(el("div", "ddate", "(" + s + ")"));
+      }
+    });
+  }
+
   function renderTable(week) {
+    renderHeads(week);
     var body = $("#weekBody");
     body.innerHTML = "";
     var items = week ? week.items || [] : [];

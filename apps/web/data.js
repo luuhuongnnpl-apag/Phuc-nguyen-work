@@ -25,8 +25,25 @@ window.PNW_DATA = {
       ]
     }
   ],
-  meetings: [],
-  study: [],
+  meetings: [
+    {
+      from: "2026-11-02",
+      to: "2026-11-08",
+      items: [
+        { day: 2, row: 1, lines: ["HỌP KHOA, HỌP ĐẢNG", "8h00"] }
+      ]
+    }
+  ],
+  study: [
+    {
+      from: "2026-11-02",
+      to: "2026-11-08",
+      items: [
+        { day: 1, row: 1, lines: ["KIỂM SOÁT QUYỀN LỰC NHÀ NƯỚC", "Thầy Thái"] },
+        { day: 2, row: 1, lines: ["KIỂM SOÁT QUYỀN LỰC NHÀ NƯỚC", "Thầy Thái", "Buổi sáng"] }
+      ]
+    }
+  ],
   invigilation: [],
   grading: [
     {

@@ -73,6 +73,9 @@ body{margin:0;min-height:100vh}
 .week-table td.today-col{background:#f5f5ff}
 .week-table tr.notice td{height:auto;padding:14px;font-size:12px;color:#777;text-transform:none;font-style:italic}
 
+.week-table th .ddate{font-size:11px;font-weight:600;opacity:.9;margin-top:3px;font-variant-numeric:tabular-nums}
+.week-table th{height:58px}
+
 /* ===== Week list ===== */
 .week-list{list-style:none;margin:16px 0 0;padding:0;align-self:flex-start;margin-left:clamp(0px,3vw,24px)}
 .week-list li{margin:2px 0}
@@ -133,7 +136,8 @@ body{margin:0;min-height:100vh}
   .nav-item:hover{transform:none}
   .section-pill{font-size:13px;min-height:34px;padding:0 16px;margin-bottom:12px}
   .week-table{min-width:560px}
-  .week-table th{font-size:10px;height:44px}
+  .week-table th{font-size:10px;height:52px}
+  .week-table th .ddate{font-size:9px}
   .week-table td{font-size:10px;height:72px;padding:6px 3px}
   .week-list{margin-left:0}
   .week-btn{font-size:12px}
