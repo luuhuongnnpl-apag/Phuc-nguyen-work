@@ -27,11 +27,13 @@
         <button class="pill nav-item" data-view="grading">CHẤM THI</button>
         <button class="pill nav-item" data-view="research">NCKH</button>
         <button class="pill nav-item" data-view="other">KHÁC</button>
+        <button class="pill nav-item" data-view="rmia">LỊCH R'MIA</button>
       </nav>
 
       <main class="main">
         <div class="section-pill pill" id="sectionTitle">LỊCH GIẢNG</div>
 
+        <div id="weekPanel" class="panel">
         <div class="table-wrap">
           <table class="week-table" aria-describedby="weekCaption">
             <caption id="weekCaption" class="sr-only">Lịch theo tuần</caption>
@@ -45,11 +47,20 @@
         </div>
 
         <ul class="week-list" id="weekList" aria-label="Các tuần đã ban hành"></ul>
+        </div>
+
+        <div id="ttPanel" class="panel" hidden>
+          <div class="class-switch" id="classSwitch" role="tablist" aria-label="Chọn lớp"></div>
+          <p class="tt-note" id="ttNote"></p>
+          <div class="table-wrap"><table class="tt-table" id="ttTable"></table></div>
+          <ul class="tt-notes" id="ttNotes"></ul>
+        </div>
       </main>
     </div>
   </div>
 
   <script src="./data.js"></script>
+  <script src="./rmia.js"></script>
   <script src="./app.js"></script>
 </body>
 </html>

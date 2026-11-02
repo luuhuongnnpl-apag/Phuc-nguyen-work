@@ -66,10 +66,10 @@ body{margin:0;min-height:100vh}
 }
 .week-table td{
   height:84px;padding:8px 6px;border:2px solid var(--line);vertical-align:middle;text-align:center;
-  font-size:11px;line-height:1.45;color:#222;text-transform:uppercase;
+  font-size:11px;line-height:1.45;color:#222;
 }
 .week-table td.filled{background:#fff}
-.week-table td .first{font-weight:600}
+.week-table td .first{font-weight:600;text-transform:uppercase}
 .week-table td.today-col{background:#f5f5ff}
 .week-table tr.notice td{height:auto;padding:14px;font-size:12px;color:#777;text-transform:none;font-style:italic}
 
@@ -87,15 +87,61 @@ body{margin:0;min-height:100vh}
 .week-btn:not(.active){opacity:.72}
 .week-empty{font-size:13px;color:#888;font-style:italic}
 
-/* ===== Responsive ===== */
+/* ===== Panels ===== */
+.panel{width:100%;display:flex;flex-direction:column;align-items:center}
+.panel[hidden]{display:none}
+
+/* ===== Lịch R'Mia (thời khóa biểu) ===== */
+.class-switch{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.class-btn{min-height:36px;padding:0 20px;font-size:14px;cursor:pointer;background:#e4e6f6;color:var(--navy)}
+.class-btn.active{background:linear-gradient(100deg,#000 0%,#1d1c86 60%,var(--indigo) 100%);color:#fff}
+.class-btn:focus-visible{outline:3px solid #8f8ff0;outline-offset:2px}
+.tt-note{margin:10px 0 14px;font-size:13px;font-style:italic;color:#3333b8;font-weight:600}
+.tt-table{width:100%;min-width:720px;border-collapse:collapse;table-layout:fixed;border:2px solid var(--line)}
+.tt-table th,.tt-table td{border:1.5px solid var(--line);text-align:center;vertical-align:middle;padding:6px 4px;font-size:12px;line-height:1.35}
+.tt-table thead th{height:46px;color:#fff;font-weight:800;background:linear-gradient(100deg,#000 0%,#14136a 55%,var(--indigo) 100%)}
+.tt-table thead th.meta{width:auto}
+.tt-table colgroup{display:none}
+.tt-table thead th:nth-child(1){width:64px}
+.tt-table thead th:nth-child(2){width:46px}
+.tt-table thead th:nth-child(3){width:104px}
+.tt-table td{height:38px}
+.tt-table .session{font-weight:800;font-size:13px;letter-spacing:.04em;color:#fff;background:var(--navy)}
+.tt-table .session-1{background:#1d1c86}
+.tt-table .period{font-weight:700;background:#f3f3fb}
+.tt-table .time{font-weight:600;background:#f3f3fb;font-variant-numeric:tabular-nums;white-space:nowrap}
+.tt-table tr.session-start>*{border-top:3px solid var(--line)}
+.tt-table td .first{font-weight:600}
+.tt-table td .sub{font-size:10.5px;color:#444}
+.tt-table .tone-center{background:#e7e7fb}
+.tt-table .tone-extra{background:#fde8d4}
+.tt-table .tone-extra .first{color:#b23b00}
+.tt-table .tone-mark{background:#fff3a6}
+.tt-table .footer-row td{font-size:11px;background:#fafafa}
+.tt-table .footer-label{font-weight:800;font-size:12px;background:#e4e6f6;color:var(--navy)}
+.tt-notes{list-style:none;padding:0;margin:14px 0 0;align-self:flex-start;display:flex;flex-direction:column;gap:3px}
+.tt-notes li{font-size:13px;font-weight:600;color:#222}
+.tt-notes li::before{content:"- "}
+
+/* ===== Responsive: giữ bố cục hai cột khi xem dọc ===== */
 @media (max-width:820px){
   .page{border-left-width:8px}
-  .masthead{min-height:100px}
-  .workspace{grid-template-columns:1fr;padding:16px 16px 28px}
-  .sidebar{flex-direction:row;overflow-x:auto;gap:8px;padding-bottom:4px}
-  .nav-item{min-height:38px;font-size:13px;padding:0 14px;flex:none}
+  .masthead{min-height:96px;gap:16px}
+  .workspace{grid-template-columns:104px minmax(0,1fr);gap:12px;padding:16px 12px 28px 10px}
+  .sidebar{gap:9px}
+  .nav-item{min-height:36px;font-size:11px;padding:0 6px;line-height:1.15}
   .nav-item:hover{transform:none}
-  .section-pill{font-size:14px;min-height:36px}
+  .section-pill{font-size:13px;min-height:34px;padding:0 16px;margin-bottom:12px}
+  .week-table{min-width:560px}
+  .week-table th{font-size:10px;height:44px}
+  .week-table td{font-size:10px;height:72px;padding:6px 3px}
   .week-list{margin-left:0}
-  .week-btn{font-size:13px}
+  .week-btn{font-size:12px}
+  .class-btn{font-size:12px;min-height:32px;padding:0 14px}
+  .tt-table{min-width:660px}
+  .tt-notes li,.tt-note{font-size:12px}
+}
+@media (max-width:420px){
+  .workspace{grid-template-columns:88px minmax(0,1fr)}
+  .nav-item{font-size:10px;min-height:34px}
 }

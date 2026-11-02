@@ -8,13 +8,15 @@
     invigilation: "COI THI",
     grading: "CHẤM THI",
     research: "NCKH",
-    other: "KHÁC"
+    other: "KHÁC",
+    rmia: "LỊCH R'MIA"
   };
   var MIN_ROWS = 3;
   var DATA = window.PNW_DATA || {};
 
   var $ = function (s) { return document.querySelector(s); };
-  var state = { view: "teaching", weekIndex: 0 };
+  var RMIA = window.PNW_RMIA || [];
+  var state = { view: "teaching", weekIndex: 0, classIndex: 0 };
 
   function parse(d) { var p = d.split("-"); return new Date(+p[0], +p[1] - 1, +p[2]); }
   function fmt(d) {
@@ -99,7 +101,74 @@
     });
   }
 
+  function cellNode(tag, c) {
+    var n = el(tag);
+    if (c && typeof c === "object") {
+      if (c.rs > 1) n.rowSpan = c.rs;
+      if (c.tone) n.className = "tone-" + c.tone;
+      String(c.t || "").split("\n").forEach(function (line, i) {
+        n.appendChild(el("div", i === 0 ? "first" : "sub", line));
+      });
+    } else {
+      n.textContent = c || "";
+    }
+    return n;
+  }
+
+  function renderTimetable() {
+    var sw = $("#classSwitch"), table = $("#ttTable"), notes = $("#ttNotes");
+    sw.innerHTML = ""; table.innerHTML = ""; notes.innerHTML = "";
+    if (!RMIA.length) {
+      $("#ttNote").textContent = "Chưa có thời khóa biểu.";
+      return;
+    }
+    if (state.classIndex >= RMIA.length) state.classIndex = 0;
+    RMIA.forEach(function (k, i) {
+      var b = el("button", "pill class-btn" + (i === state.classIndex ? " active" : ""), k.name);
+      b.type = "button"; b.setAttribute("role", "tab");
+      b.setAttribute("aria-selected", i === state.classIndex ? "true" : "false");
+      b.addEventListener("click", function () { state.classIndex = i; renderTimetable(); });
+      sw.appendChild(b);
+    });
+    var k = RMIA[state.classIndex];
+    $("#ttNote").textContent = k.note || "";
+
+    var thead = el("thead"), hr = el("tr");
+    ["BUỔI", "TIẾT", "THỜI GIAN"].concat(k.days).forEach(function (h, i) {
+      hr.appendChild(el("th", i < 3 ? "meta" : "", h));
+    });
+    thead.appendChild(hr); table.appendChild(thead);
+
+    var tbody = el("tbody");
+    k.sessions.forEach(function (s, si) {
+      s.rows.forEach(function (r, ri) {
+        var tr = el("tr", ri === 0 && si > 0 ? "session-start" : "");
+        if (ri === 0) {
+          var sc = el("th", "session session-" + si, s.name);
+          sc.rowSpan = s.rows.length; sc.scope = "rowgroup";
+          tr.appendChild(sc);
+        }
+        tr.appendChild(el("td", "period", r[0]));
+        tr.appendChild(el("td", "time", r[1]));
+        r[2].forEach(function (c) { if (c !== null) tr.appendChild(cellNode("td", c)); });
+        tbody.appendChild(tr);
+      });
+    });
+    (k.footer || []).forEach(function (f) {
+      var tr = el("tr", "footer-row");
+      var lab = el("th", "footer-label", f[0]); lab.colSpan = 3; lab.scope = "row";
+      tr.appendChild(lab);
+      f[1].forEach(function (c) { tr.appendChild(cellNode("td", c)); });
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    (k.notes || []).forEach(function (t) { notes.appendChild(el("li", "", t)); });
+  }
+
   function render() {
+    var isTT = state.view === "rmia";
+    $("#weekPanel").hidden = isTT;
+    $("#ttPanel").hidden = !isTT;
     var weeks = weeksOf(state.view);
     if (state.weekIndex >= weeks.length) state.weekIndex = 0;
     var week = weeks[state.weekIndex];
@@ -110,6 +179,7 @@
       b.classList.toggle("active", on);
       b.setAttribute("aria-current", on ? "page" : "false");
     });
+    if (isTT) { renderTimetable(); return; }
     renderTable(week);
     renderWeekList(weeks);
   }
