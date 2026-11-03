@@ -96,6 +96,10 @@
     }
   }
 
+  function pushWorkHistory() {
+    history.pushState({ pnWorkState: { view: state.view, weekIndex: state.weekIndex, classIndex: state.classIndex } }, "", location.href);
+  }
+
   function renderWeekList(weeks) {
     var list = $("#weekList");
     list.innerHTML = "";
@@ -109,7 +113,7 @@
       label.appendChild(document.createTextNode("- Tuần từ " + fmt(w.from) + " - "));
       label.appendChild(el("span", "to", fmt(w.to)));
       b.appendChild(label);
-      b.addEventListener("click", function () { state.weekIndex = i; render(); });
+      b.addEventListener("click", function () { if (state.weekIndex === i) return; state.weekIndex = i; pushWorkHistory(); render(); });
       li.appendChild(b);
       list.appendChild(li);
     });
@@ -141,7 +145,7 @@
       var b = el("button", "class-btn" + (i === state.classIndex ? " active" : ""), k.name);
       b.type = "button"; b.setAttribute("role", "tab");
       b.setAttribute("aria-selected", i === state.classIndex ? "true" : "false");
-      b.addEventListener("click", function () { state.classIndex = i; renderTimetable(); });
+      b.addEventListener("click", function () { if (state.classIndex === i) return; state.classIndex = i; pushWorkHistory(); renderTimetable(); });
       sw.appendChild(b);
     });
     var k = RMIA[state.classIndex];
@@ -202,9 +206,10 @@
     if (!TITLES[view]) view = "teaching";
     state.view = view;
     state.weekIndex = defaultWeekIndex(weeksOf(view));
-    if (historyMode !== "none" && location.hash.slice(1) !== view) {
-      if (historyMode === "replace") history.replaceState({ pnWorkView: view }, "", "#" + view);
-      else history.pushState({ pnWorkView: view }, "", "#" + view);
+    if (historyMode === "replace") {
+      history.replaceState({ pnWorkState: { view: view, weekIndex: state.weekIndex, classIndex: state.classIndex } }, "", "#" + view);
+    } else if (historyMode !== "none" && location.hash.slice(1) !== view) {
+      history.pushState({ pnWorkState: { view: view, weekIndex: state.weekIndex, classIndex: state.classIndex } }, "", "#" + view);
     }
     render();
   }
@@ -216,8 +221,15 @@
 
   activate(location.hash.slice(1) || "teaching", "replace");
   window.addEventListener("popstate", function (event) {
-    var view = event.state && event.state.pnWorkView || location.hash.slice(1) || "teaching";
-    activate(view, "none");
+    var saved = event.state && event.state.pnWorkState;
+    if (saved && TITLES[saved.view]) {
+      state.view = saved.view;
+      state.weekIndex = Number.isInteger(saved.weekIndex) ? saved.weekIndex : 0;
+      state.classIndex = Number.isInteger(saved.classIndex) ? saved.classIndex : 0;
+      render();
+      return;
+    }
+    activate(location.hash.slice(1) || "teaching", "none");
   });
 
   // Khi API được cấu hình và người dùng đã đăng nhập, lịch lưu trên D1
