@@ -1,0 +1,155 @@
+{
+  "source": "apps/web/data.js on main; snapshot made 2026-11-03",
+  "note": "Bản sao dữ liệu lịch tĩnh hiện có để dùng làm dữ liệu demo. Không đại diện cho dữ liệu D1 vì chưa có quyền truy cập D1.",
+  "weeks": [
+    {
+      "category": "teaching",
+      "from": "2026-11-02",
+      "to": "2026-11-08",
+      "items": [
+        {
+          "day": 1,
+          "period": "evening",
+          "lines": [
+            "LUẬT DÂN SỰ",
+            "2505LHOD",
+            "20h00"
+          ]
+        },
+        {
+          "day": 2,
+          "period": "evening",
+          "lines": [
+            "LUẬT ĐẤT ĐAI",
+            "2405LHOA",
+            "20h00"
+          ]
+        },
+        {
+          "day": 5,
+          "period": "evening",
+          "lines": [
+            "LUẬT DÂN SỰ",
+            "2505LHOA",
+            "20h00"
+          ]
+        }
+      ]
+    },
+    {
+      "category": "meetings",
+      "from": "2026-11-02",
+      "to": "2026-11-08",
+      "items": [
+        {
+          "day": 2,
+          "period": "morning",
+          "lines": [
+            "HỌP KHOA, HỌP ĐẢNG",
+            "8h00"
+          ]
+        },
+        {
+          "day": 4,
+          "period": "morning",
+          "lines": [
+            "KỶ NIỆM 45 NĂM KHOA LUẬT",
+            "8:00 - 12:00"
+          ]
+        }
+      ]
+    },
+    {
+      "category": "study",
+      "from": "2026-11-02",
+      "to": "2026-11-08",
+      "items": [
+        {
+          "day": 1,
+          "period": "morning",
+          "lines": [
+            "KIỂM SOÁT QUYỀN LỰC NHÀ NƯỚC",
+            "Thầy Thái",
+            "8h30 - 11h00"
+          ]
+        },
+        {
+          "day": 1,
+          "period": "afternoon",
+          "lines": [
+            "KIỂM SOÁT QUYỀN LỰC NHÀ NƯỚC",
+            "Thầy Thái",
+            "14h00 - 17h00"
+          ]
+        },
+        {
+          "day": 2,
+          "period": "morning",
+          "lines": [
+            "KIỂM SOÁT QUYỀN LỰC NHÀ NƯỚC",
+            "Thầy Thái",
+            "8h30 - 11h00"
+          ]
+        },
+        {
+          "day": 2,
+          "period": "afternoon",
+          "lines": [
+            "KIỂM SOÁT QUYỀN LỰC NHÀ NƯỚC",
+            "Thầy Thái",
+            "14h00 - 17h00"
+          ]
+        },
+        {
+          "day": 3,
+          "period": "morning",
+          "lines": [
+            "TỔ CHỨC THỰC HIỆN QUYỀN HÀNH PHÁP",
+            "TS. Lê Thị Hoa",
+            "8h00 - 11h00"
+          ]
+        },
+        {
+          "day": 3,
+          "period": "afternoon",
+          "lines": [
+            "NÓI CHUYỆN CHUYÊN ĐỀ KHOA LUẬT",
+            "Thầy Thái, Thầy Vinh",
+            "14h00 - 17h00",
+            "Phòng truyền thống"
+          ]
+        },
+        {
+          "day": 4,
+          "period": "afternoon",
+          "lines": [
+            "TỔ CHỨC THỰC HIỆN QUYỀN HÀNH PHÁP",
+            "TS. Lê Thị Hoa",
+            "14:00 - 17:00"
+          ]
+        }
+      ]
+    },
+    {
+      "category": "grading",
+      "from": "2026-11-02",
+      "to": "2026-11-08",
+      "items": [
+        {
+          "day": 1,
+          "period": "morning",
+          "lines": [
+            "RA ĐỀ THI",
+            "KNTVPLDS K23"
+          ]
+        }
+      ]
+    }
+  ],
+  "emptyCategories": [
+    "invigilation",
+    "research",
+    "other",
+    "rmia"
+  ]
+}
