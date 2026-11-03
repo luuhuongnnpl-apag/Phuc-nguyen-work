@@ -25,4 +25,5 @@ jobs:
         run: |
           node --check apps/web/app.js
           node --check apps/web/manage.js
+          node --check apps/web/planner.js
           node --check apps/api/src/index.js
