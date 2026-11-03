@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated": "2026-11-03T14:39:12.746Z",
+  "updated": "2026-11-03T14:41:57.258Z",
   "categories": [
     {
       "id": "teaching",
@@ -167,6 +167,15 @@
       "mode": "deadline",
       "location": "",
       "info": "In bình bổ sung"
+    },
+    {
+      "id": "emw0sqmn8s9zr",
+      "title": "Ra đề  HCM - TVPLDS",
+      "category": "grading",
+      "date": "2026-11-22",
+      "mode": "deadline",
+      "location": "",
+      "info": "Ngày thi 01/12/2026"
     }
   ]
 }
