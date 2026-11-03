@@ -20,7 +20,7 @@ window.PNW_DATA = {
       to: "2026-11-08",
       items: [
         { day: 1, row: 3, lines: ["LUẬT DÂN SỰ", "2505LHOD", "20h00"] },
-        { day: 3, row: 3, lines: ["LUẬT ĐẤT ĐAI", "2405LHOA", "20h00"] },
+        { day: 2, row: 3, lines: ["LUẬT ĐẤT ĐAI", "2405LHOA", "20h00"] },
         { day: 5, row: 3, lines: ["LUẬT DÂN SỰ", "2505LHOA", "20h00"] }
       ]
     }
