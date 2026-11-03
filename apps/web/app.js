@@ -2,6 +2,7 @@
   "use strict";
 
   var TITLES = {
+    overview: "LỊCH TỔNG",
     teaching: "LỊCH GIẢNG",
     meetings: "LỊCH HỌP",
     study: "LỊCH HỌC",
@@ -32,6 +33,15 @@
 
   // Tuần mới nhất lên đầu, tuần ban hành trước xếp xuống dưới
   function weeksOf(view) {
+    if (view === "overview") {
+      var map = {};
+      Object.keys(TITLES).forEach(function (type) {
+        if (type === "overview" || type === "rmia") return;
+        (DATA[type] || []).forEach(function (w) { map[w.from + "|" + w.to] = { from: w.from, to: w.to }; });
+      });
+      return Object.keys(map).map(function (key) { return map[key]; })
+        .sort(function (a, b) { return parse(b.from) - parse(a.from); });
+    }
     return (DATA[view] || []).slice().sort(function (a, b) { return parse(b.from) - parse(a.from); });
   }
 
@@ -94,6 +104,46 @@
       var c = el("td", "", "Chưa có lịch được ban hành.");
       c.colSpan = 7; n.appendChild(c); body.appendChild(n);
     }
+  }
+
+  function renderOverview(week) {
+    renderHeads(week);
+    var body = $("#weekBody");
+    body.innerHTML = "";
+    if (!week) {
+      var empty = el("tr", "notice");
+      var msg = el("td", "", "Chưa có lịch được ban hành.");
+      msg.colSpan = 7; empty.appendChild(msg); body.appendChild(empty);
+      return;
+    }
+    var tr = el("tr", "overview-row");
+    var categoryNames = TITLES;
+    for (var day = 1; day <= 7; day++) {
+      var td = el("td", "overview-day");
+      var events = [];
+      Object.keys(categoryNames).forEach(function (type) {
+        if (type === "overview" || type === "rmia") return;
+        (DATA[type] || []).forEach(function (w) {
+          if (w.from !== week.from || w.to !== week.to) return;
+          (w.items || []).forEach(function (item) {
+            if (item.day === day) events.push({ row: Number(item.row || 1), type: type, lines: item.lines || [] });
+          });
+        });
+      });
+      events.sort(function (x, y) { return x.row - y.row; });
+      if (day === todayColumn(week)) td.classList.add("today-col");
+      events.forEach(function (event) {
+        var card = el("div", "overview-event");
+        card.appendChild(el("div", "overview-category", categoryNames[event.type]));
+        (event.lines || []).forEach(function (line, i) {
+          card.appendChild(el("div", i === 0 ? "first" : "overview-detail", line));
+        });
+        td.appendChild(card);
+      });
+      if (!events.length) td.appendChild(el("div", "overview-empty", "—"));
+      tr.appendChild(td);
+    }
+    body.appendChild(tr);
   }
 
   function pushWorkHistory() {
@@ -198,7 +248,8 @@
       b.setAttribute("aria-current", on ? "page" : "false");
     });
     if (isTT) { renderTimetable(); return; }
-    renderTable(week);
+    if (state.view === "overview") renderOverview(week);
+    else renderTable(week);
     renderWeekList(weeks);
   }
 
@@ -219,7 +270,7 @@
     if (b) activate(b.dataset.view);
   });
 
-  activate(location.hash.slice(1) || "teaching", "replace");
+  activate(location.hash.slice(1) || "overview", "replace");
   window.addEventListener("popstate", function (event) {
     var saved = event.state && event.state.pnWorkState;
     if (saved && TITLES[saved.view]) {
@@ -229,7 +280,7 @@
       render();
       return;
     }
-    activate(location.hash.slice(1) || "teaching", "none");
+    activate(location.hash.slice(1) || "overview", "none");
   });
 
   // Khi API được cấu hình và người dùng đã đăng nhập, lịch lưu trên D1
