@@ -206,10 +206,10 @@
     if (!TITLES[view]) view = "teaching";
     state.view = view;
     state.weekIndex = defaultWeekIndex(weeksOf(view));
-    if (historyMode !== "none" && location.hash.slice(1) !== view) {
-      var snapshot = { pnWorkState: { view: view, weekIndex: state.weekIndex, classIndex: state.classIndex } };
-      if (historyMode === "replace") history.replaceState(snapshot, "", "#" + view);
-      else history.pushState(snapshot, "", "#" + view);
+    if (historyMode === "replace") {
+      history.replaceState({ pnWorkState: { view: view, weekIndex: state.weekIndex, classIndex: state.classIndex } }, "", "#" + view);
+    } else if (historyMode !== "none" && location.hash.slice(1) !== view) {
+      history.pushState({ pnWorkState: { view: view, weekIndex: state.weekIndex, classIndex: state.classIndex } }, "", "#" + view);
     }
     render();
   }
