@@ -1,27 +1,162 @@
 {
   "version": 1,
-  "updated": "2026-11-03T21:30:00+07:00",
+  "updated": "2026-11-03T14:38:41.482Z",
   "categories": [
-    { "id": "teaching", "name": "Lịch giảng", "tab": "LỊCH GIẢNG" },
-    { "id": "meetings", "name": "Lịch họp", "tab": "LỊCH HỌP" },
-    { "id": "study", "name": "Lịch học", "tab": "LỊCH HỌC" },
-    { "id": "invigilation", "name": "Coi thi", "tab": "COI THI" },
-    { "id": "grading", "name": "Chấm thi, ra đề", "tab": "CHẤM THI" },
-    { "id": "research", "name": "Nghiên cứu khoa học", "tab": "NCKH" },
-    { "id": "other", "name": "Công việc khác", "tab": "KHÁC" }
+    {
+      "id": "teaching",
+      "name": "Lịch giảng",
+      "tab": "LỊCH GIẢNG"
+    },
+    {
+      "id": "meetings",
+      "name": "Lịch họp",
+      "tab": "LỊCH HỌP"
+    },
+    {
+      "id": "study",
+      "name": "Lịch học",
+      "tab": "LỊCH HỌC"
+    },
+    {
+      "id": "invigilation",
+      "name": "Coi thi",
+      "tab": "COI THI"
+    },
+    {
+      "id": "grading",
+      "name": "Chấm thi, ra đề",
+      "tab": "CHẤM THI"
+    },
+    {
+      "id": "research",
+      "name": "Nghiên cứu khoa học",
+      "tab": "NCKH"
+    },
+    {
+      "id": "other",
+      "name": "Công việc khác",
+      "tab": "KHÁC"
+    }
   ],
   "events": [
-    { "id": "e20261102a", "title": "LUẬT DÂN SỰ", "category": "teaching", "date": "2026-11-02", "mode": "time", "start": "20:00", "end": "", "info": "2505LHOD", "location": "" },
-    { "id": "e20261105a", "title": "LUẬT ĐẤT ĐAI", "category": "teaching", "date": "2026-11-05", "mode": "time", "start": "20:00", "end": "", "info": "2405LHOA", "location": "" },
-    { "id": "e20261106a", "title": "LUẬT DÂN SỰ", "category": "teaching", "date": "2026-11-06", "mode": "time", "start": "20:00", "end": "", "info": "2505LHOA", "location": "" },
-    { "id": "e20261103a", "title": "HỌP KHOA, HỌP ĐẢNG", "category": "meetings", "date": "2026-11-03", "mode": "time", "start": "08:00", "end": "", "info": "", "location": "" },
-    { "id": "e20261105b", "title": "KỶ NIỆM 45 NĂM KHOA LUẬT", "category": "meetings", "date": "2026-11-05", "mode": "time", "start": "08:00", "end": "12:00", "info": "", "location": "" },
-    { "id": "e20261102b", "title": "KIỂM SOÁT QUYỀN LỰC NHÀ NƯỚC", "category": "study", "date": "2026-11-02", "mode": "time", "start": "08:30", "end": "17:00", "info": "GS. Thái", "location": "" },
-    { "id": "e20261103b", "title": "KIỂM SOÁT QUYỀN LỰC NHÀ NƯỚC", "category": "study", "date": "2026-11-03", "mode": "time", "start": "08:30", "end": "17:00", "info": "GS. Thái", "location": "" },
-    { "id": "e20261104a", "title": "TỔ CHỨC THỰC HIỆN QUYỀN HÀNH PHÁP", "category": "study", "date": "2026-11-04", "mode": "time", "start": "08:00", "end": "11:00", "info": "TS. Lê Thị Hoa", "location": "" },
-    { "id": "e20261104b", "title": "NÓI CHUYỆN CHUYÊN ĐỀ KHOA LUẬT", "category": "study", "date": "2026-11-04", "mode": "time", "start": "14:00", "end": "17:00", "info": "Thầy Thái, Thầy Vinh", "location": "Phòng truyền thống" },
-    { "id": "e20261105c", "title": "TỔ CHỨC THỰC HIỆN QUYỀN HÀNH PHÁP", "category": "study", "date": "2026-11-05", "mode": "time", "start": "14:00", "end": "17:00", "info": "TS. Lê Thị Hoa", "location": "" },
-    { "id": "e20261102c", "title": "RA ĐỀ THI", "category": "grading", "date": "2026-11-02", "mode": "session", "session": 1, "info": "KNTVPLDS K23", "location": "" },
-    { "id": "e20261103c", "title": "RA ĐỀ KN TVPLDS", "category": "grading", "date": "2026-11-03", "mode": "deadline", "info": "", "location": "" }
+    {
+      "id": "e20261102a",
+      "title": "LUẬT DÂN SỰ",
+      "category": "teaching",
+      "date": "2026-11-02",
+      "mode": "time",
+      "start": "20:00",
+      "end": "",
+      "info": "2505LHOD",
+      "location": ""
+    },
+    {
+      "id": "e20261105a",
+      "title": "LUẬT ĐẤT ĐAI",
+      "category": "teaching",
+      "date": "2026-11-05",
+      "mode": "time",
+      "start": "20:00",
+      "end": "",
+      "info": "2405LHOA",
+      "location": ""
+    },
+    {
+      "id": "e20261106a",
+      "title": "LUẬT DÂN SỰ",
+      "category": "teaching",
+      "date": "2026-11-06",
+      "mode": "time",
+      "start": "20:00",
+      "end": "",
+      "info": "2505LHOA",
+      "location": ""
+    },
+    {
+      "id": "e20261103a",
+      "title": "HỌP KHOA, HỌP ĐẢNG",
+      "category": "meetings",
+      "date": "2026-11-03",
+      "mode": "time",
+      "start": "08:00",
+      "end": "",
+      "info": "",
+      "location": ""
+    },
+    {
+      "id": "e20261105b",
+      "title": "KỶ NIỆM 45 NĂM KHOA LUẬT",
+      "category": "meetings",
+      "date": "2026-11-05",
+      "mode": "time",
+      "start": "08:00",
+      "end": "12:00",
+      "info": "",
+      "location": ""
+    },
+    {
+      "id": "e20261102b",
+      "title": "KIỂM SOÁT QUYỀN LỰC NHÀ NƯỚC",
+      "category": "study",
+      "date": "2026-11-02",
+      "mode": "time",
+      "start": "08:30",
+      "end": "17:00",
+      "info": "GS. Thái",
+      "location": ""
+    },
+    {
+      "id": "e20261103b",
+      "title": "KIỂM SOÁT QUYỀN LỰC NHÀ NƯỚC",
+      "category": "study",
+      "date": "2026-11-03",
+      "mode": "time",
+      "start": "08:30",
+      "end": "17:00",
+      "info": "GS. Thái",
+      "location": ""
+    },
+    {
+      "id": "e20261104a",
+      "title": "TỔ CHỨC THỰC HIỆN QUYỀN HÀNH PHÁP",
+      "category": "study",
+      "date": "2026-11-04",
+      "mode": "time",
+      "start": "08:00",
+      "end": "11:00",
+      "info": "TS. Lê Thị Hoa",
+      "location": ""
+    },
+    {
+      "id": "e20261104b",
+      "title": "NÓI CHUYỆN CHUYÊN ĐỀ KHOA LUẬT",
+      "category": "study",
+      "date": "2026-11-04",
+      "mode": "time",
+      "start": "14:00",
+      "end": "17:00",
+      "info": "Thầy Thái, Thầy Vinh",
+      "location": "Phòng truyền thống"
+    },
+    {
+      "id": "e20261105c",
+      "title": "TỔ CHỨC THỰC HIỆN QUYỀN HÀNH PHÁP",
+      "category": "study",
+      "date": "2026-11-05",
+      "mode": "time",
+      "start": "14:00",
+      "end": "17:00",
+      "info": "TS. Lê Thị Hoa",
+      "location": ""
+    },
+    {
+      "id": "e20261103c",
+      "title": "RA ĐỀ KN TVPLDS",
+      "category": "grading",
+      "date": "2026-11-03",
+      "mode": "deadline",
+      "info": "",
+      "location": ""
+    }
   ]
 }
