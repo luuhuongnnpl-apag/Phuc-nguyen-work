@@ -198,11 +198,14 @@
     renderWeekList(weeks);
   }
 
-  function activate(view) {
+  function activate(view, historyMode) {
     if (!TITLES[view]) view = "teaching";
     state.view = view;
     state.weekIndex = defaultWeekIndex(weeksOf(view));
-    if (location.hash.slice(1) !== view) history.replaceState(null, "", "#" + view);
+    if (historyMode !== "none" && location.hash.slice(1) !== view) {
+      if (historyMode === "replace") history.replaceState({ pnWorkView: view }, "", "#" + view);
+      else history.pushState({ pnWorkView: view }, "", "#" + view);
+    }
     render();
   }
 
@@ -211,7 +214,11 @@
     if (b) activate(b.dataset.view);
   });
 
-  activate(location.hash.slice(1) || "teaching");
+  activate(location.hash.slice(1) || "teaching", "replace");
+  window.addEventListener("popstate", function (event) {
+    var view = event.state && event.state.pnWorkView || location.hash.slice(1) || "teaching";
+    activate(view, "none");
+  });
 
   // Khi API được cấu hình và người dùng đã đăng nhập, lịch lưu trên D1
   // được ưu tiên hiển thị; dữ liệu tĩnh vẫn là phương án dự phòng khi offline.
