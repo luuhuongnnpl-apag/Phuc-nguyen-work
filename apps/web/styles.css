@@ -245,3 +245,81 @@ body{font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--ink
 @media(max-width:420px){
   .schedule-nav .nav-item{font-size:9.5px;padding:7px 9px}
 }
+
+
+/* Phúc Nguyên Work — đồng bộ hệ nhận diện Phúc Nguyên Library */
+:root{
+  --bg:#f3f6fa; --paper:#fff; --ink:#18263a; --muted:#5a6678; --line:#dfe5ed;
+  --band:#1f527d; --band-2:#17415f; --on-band:#fff; --on-band-2:#d7e5f1;
+  --head:#1f527d; --frame:#dfe5ed; --tint:#e8f0f8; --grid:#dfe5ed; --today:#f7f9fc;
+  --t-center:#e8f0f8; --t-extra:#e8f0f8; --t-extra-ink:#1f527d; --t-mark:#e8f0f8;
+  --f-display:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-body:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --pn-primary:#1f527d; --pn-primary-dark:#17415f; --pn-primary-soft:#e8f0f8;
+  --pn-accent:#b3261e; --pn-ok:#1f7a4d;
+}
+body{font-family:var(--f-body);background:var(--bg);color:var(--ink)}
+.band{background:var(--band);color:var(--on-band)}
+.band h1,.kicker,.ftitle,h1,h2,h3{font-family:var(--f-display)}
+.nav-item{font-family:var(--f-display)}
+.nav-item.active{background:var(--pn-primary-soft);color:var(--pn-primary)}
+.nav-item.active::before{background:var(--pn-primary)}
+.schedule-nav{border-color:var(--line);background:var(--paper);box-shadow:0 2px 8px rgba(24,38,58,.045)}
+.schedule-nav .nav-item.active{background:var(--pn-primary-soft);color:var(--pn-primary);box-shadow:inset 0 -2px var(--pn-primary)}
+.frame,.panel,.planner-main,.planner-side,.manage-main,.data-panel,.report-panel,.reminder-panel{border-color:var(--line)}
+.week-table{border-color:var(--line);border-radius:10px}
+.week-table th{background:var(--pn-primary-soft);color:var(--ink);border-color:var(--line);font-family:var(--f-display)}
+.week-table th .ddate{color:var(--muted);font-family:var(--f-body)}
+.week-table td{border-color:var(--line);font-family:var(--f-body)}
+.week-table td .first{font-family:var(--f-display);color:var(--pn-primary)}
+.week-table td.today-col{background:#f7f9fc}
+.week-table tr.deadline-row td{background:var(--pn-primary-soft)}
+.week-table tr.deadline-row .schedule-entry,
+.week-table .fixed-date-event{background:var(--pn-primary);border-color:var(--pn-primary);color:#fff}
+.week-table tr.deadline-row .schedule-entry .first,
+.week-table .fixed-date-event .first,
+.week-table .fixed-date-event .overview-detail{color:#fff}
+.week-table .fixed-date-event .overview-category{color:#e8f0f8}
+.schedule-entry{border-left:3px solid var(--pn-primary);background:var(--pn-primary-soft);border-radius:6px;padding:5px 7px}
+.schedule-entry.fixed-date-entry{background:var(--pn-primary);color:#fff;border-left-color:var(--pn-primary-dark)}
+.schedule-entry.fixed-date-entry .first{color:#fff}
+.week-table .overview-event{border:1px solid var(--line);border-left:3px solid var(--pn-primary);background:var(--pn-primary-soft);border-radius:7px}
+.week-table .overview-event .first{color:var(--pn-primary)}
+.week-table .overview-category,.week-table .overview-detail{color:var(--muted)}
+.week-table .overview-event.fixed-date-event{background:var(--pn-primary);border-color:var(--pn-primary);color:#fff}
+.week-table .overview-event.fixed-date-event .first,
+.week-table .overview-event.fixed-date-event .overview-detail{color:#fff}
+.week-table .overview-event.fixed-date-event .overview-category{color:#e8f0f8}
+.event-card,.event-card.teaching,.event-card.meetings,.event-card.study,.event-card.grading,.event-card.other{
+  background:var(--pn-primary-soft);border-color:var(--pn-primary);color:var(--ink)
+}
+.dot,.dot.teaching,.dot.meetings,.dot.study,.dot.grading,.dot.other{background:var(--pn-primary)}
+.planner-side a.selected{background:var(--pn-primary-soft);color:var(--pn-primary)}
+.week-controls button,.class-btn{border-color:var(--line);color:var(--pn-primary)}
+.class-btn.active,.primary-action{background:var(--pn-primary);color:#fff}
+.primary-action:hover{background:var(--pn-primary-dark)}
+.pn-history-nav{background:var(--pn-primary-dark)}
+.pill.urgent,.pill.high{background:#fbe9e8;color:var(--pn-accent)}
+.pill.completed{background:#e8f3ed;color:var(--pn-ok)}
+.master-status.overdue{color:var(--pn-accent)}
+.master-status.completed{color:var(--pn-ok)}
+@media(prefers-color-scheme:dark){
+ :root:not([data-theme="light"]){
+  --bg:#101722;--paper:#171f2b;--ink:#e7edf5;--muted:#a1aec0;--line:#2b3748;
+  --band:#8fb8df;--band-2:#17415f;--on-band:#101722;--on-band-2:#d7e5f1;
+  --head:#8fb8df;--frame:#2b3748;--tint:#202f42;--grid:#2b3748;--today:#1a2635;
+  --pn-primary:#8fb8df;--pn-primary-dark:#a7c8e7;--pn-primary-soft:#202f42;
+  --pn-accent:#f08a80;--pn-ok:#6fd3a0;
+ }
+}
+:root[data-theme="dark"]{
+ --bg:#101722;--paper:#171f2b;--ink:#e7edf5;--muted:#a1aec0;--line:#2b3748;
+ --band:#8fb8df;--band-2:#17415f;--on-band:#101722;--on-band-2:#d7e5f1;
+ --head:#8fb8df;--frame:#2b3748;--tint:#202f42;--grid:#2b3748;--today:#1a2635;
+ --pn-primary:#8fb8df;--pn-primary-dark:#a7c8e7;--pn-primary-soft:#202f42;
+ --pn-accent:#f08a80;--pn-ok:#6fd3a0;color-scheme:dark
+}
+@media(max-width:820px){
+ .week-table{min-width:700px}
+ .week-table td{font-size:12px}
+}
