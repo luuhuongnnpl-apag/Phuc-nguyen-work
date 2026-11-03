@@ -323,3 +323,6 @@ body{font-family:var(--f-body);background:var(--bg);color:var(--ink)}
  .week-table{min-width:700px}
  .week-table td{font-size:12px}
 }
+
+/* Enforce the PNL typeface consistently, including components with legacy font shorthands. */
+body,body *{font-family:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",sans-serif!important}
