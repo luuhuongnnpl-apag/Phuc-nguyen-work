@@ -1,29 +1,52 @@
+/*
+  PHÚC NGUYÊN WORK — LỊCH CÔNG TÁC
+  ---------------------------------------------------------------
+  Nguồn dữ liệu duy nhất: data/events.json (categories + events).
+  - Lịch tổng hiển thị mọi công việc; mỗi lịch con là bộ lọc theo phân loại.
+  - Thống kê đọc cùng nguồn đó, quy đổi số tiết theo thời lượng.
+  - Chế độ biên tập: lưu trực tiếp vào kho GitHub qua Contents API bằng
+    mã truy cập của người biên tập (lưu trong trình duyệt của máy đó).
+  Mỗi công việc (event):
+    id, title, category, date (YYYY-MM-DD),
+    mode: "time" (start, end) | "session" (session 1 sáng, 2 chiều, 3 tối)
+          | "allday" (sáng + chiều) | "deadline" (hàng chốt hạn),
+    location, info (nhiều dòng), lessons (tùy chọn, ghi đè số tiết tự tính).
+*/
 (function () {
   "use strict";
 
-  var TITLES = {
-    overview: "LỊCH TỔNG",
-    teaching: "LỊCH GIẢNG",
-    meetings: "LỊCH HỌP",
-    study: "LỊCH HỌC",
-    invigilation: "COI THI",
-    grading: "CHẤM THI",
-    research: "NCKH",
-    other: "KHÁC",
-    rmia: "LỊCH R'MIA"
-  };
-  var MIN_ROWS = 4;
-  var DATA = window.PNW_DATA || {};
+  var CFG = window.PNW_CONFIG || {};
+  var GH = CFG.github || {};
+  var MIN_PER_LESSON = Number(CFG.minutesPerLesson) || 60;
+  var TOKEN_KEY = "pnw_github_token";
+  var RMIA = window.PNW_RMIA || [];
+  var DAY_NAMES = ["THỨ HAI", "THỨ 3", "THỨ 4", "THỨ 5", "THỨ 6", "THỨ 7", "CHỦ NHẬT"];
+  var DAY_SHORT = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
+  var SESSION_NAMES = { 1: "Sáng", 2: "Chiều", 3: "Tối" };
+  var SESSION_START = { 1: "08:00", 2: "14:00", 3: "18:00" };
+
+  var store = { version: 1, categories: [], events: [] };
+  var sha = null;
+  var token = null;
+  var state = { view: "overview", weekFrom: null, classIndex: 0 };
+  var editingId = null;
 
   var $ = function (s) { return document.querySelector(s); };
-  var RMIA = window.PNW_RMIA || [];
-  var state = { view: "teaching", weekIndex: 0, classIndex: 0 };
 
-  function parse(d) { var p = d.split("-"); return new Date(+p[0], +p[1] - 1, +p[2]); }
-  function fmt(d) {
-    var x = parse(d);
-    return String(x.getDate()).padStart(2, "0") + "/" + String(x.getMonth() + 1).padStart(2, "0") + "/" + x.getFullYear();
-  }
+  /* ---------- Tiện ích ngày giờ ---------- */
+  function pad(n) { return String(n).padStart(2, "0"); }
+  function iso(d) { return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
+  function parse(s) { var p = String(s).split("-"); return new Date(+p[0], +p[1] - 1, +p[2]); }
+  function addDays(s, n) { var d = parse(s); d.setDate(d.getDate() + n); return iso(d); }
+  function mondayOf(s) { var d = parse(s); var wd = (d.getDay() + 6) % 7; d.setDate(d.getDate() - wd); return iso(d); }
+  function todayISO() { return iso(new Date()); }
+  function fmt(s) { var d = parse(s); return pad(d.getDate()) + "/" + pad(d.getMonth() + 1) + "/" + d.getFullYear(); }
+  function weekdayIndex(s) { return (parse(s).getDay() + 6) % 7; }
+  function minutes(t) { if (!t) return null; var p = t.split(":"); return (+p[0]) * 60 + (+p[1]); }
+  function hText(t) { if (!t) return ""; var p = t.split(":"); return pad(+p[0]) + "h" + p[1]; }
+  function rowOf(m) { return m < 720 ? 1 : (m < 1080 ? 2 : 3); }
+  function validDate(s) { return /^\d{4}-\d{2}-\d{2}$/.test(s || ""); }
+
   function el(tag, cls, text) {
     var n = document.createElement(tag);
     if (cls) n.className = cls;
@@ -31,186 +54,248 @@
     return n;
   }
 
-  // Tuần mới nhất lên đầu, tuần ban hành trước xếp xuống dưới
-  function weeksOf(view) {
-    if (view === "overview") {
-      var map = {};
-      Object.keys(TITLES).forEach(function (type) {
-        if (type === "overview" || type === "rmia") return;
-        (DATA[type] || []).forEach(function (w) { map[w.from + "|" + w.to] = { from: w.from, to: w.to }; });
-      });
-      return Object.keys(map).map(function (key) { return map[key]; })
-        .sort(function (a, b) { return parse(b.from) - parse(a.from); });
-    }
-    return (DATA[view] || []).slice().sort(function (a, b) { return parse(b.from) - parse(a.from); });
+  /* ---------- Phân loại ---------- */
+  function categories() { return store.categories || []; }
+  function catById(id) { return categories().filter(function (c) { return c.id === id; })[0]; }
+  function catName(id) { var c = catById(id); return c ? c.name : "Khác"; }
+  function catTab(id) { var c = catById(id); return c ? (c.tab || c.name.toUpperCase()) : "KHÁC"; }
+  function slug(s) {
+    return String(s).normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D")
+      .toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "loai";
   }
 
-  function defaultWeekIndex(weeks) {
-    var now = new Date(); now.setHours(0, 0, 0, 0);
-    for (var i = 0; i < weeks.length; i++) {
-      if (parse(weeks[i].from) <= now && now <= parse(weeks[i].to)) return i;
-    }
-    return 0;
+  /* ---------- Suy ra vị trí, nội dung, số tiết của một công việc ---------- */
+  function rowsOf(ev) {
+    if (ev.mode === "deadline") return [4, 4];
+    if (ev.mode === "allday") return [1, 2];
+    if (ev.mode === "session") { var s = Number(ev.session) || 1; return [s, s]; }
+    var a = rowOf(minutes(ev.start) || 0);
+    var b = ev.end ? rowOf(Math.max(minutes(ev.end) - 1, 0)) : a;
+    return [a, Math.max(a, b)];
   }
 
-  // Chỉ làm mờ ngày đã qua; không loại bỏ sự kiện lịch khỏi giao diện.
-  function isPastDate(week, day) {
-    if (!week) return false;
-    var eventDate = parse(week.from);
-    eventDate.setDate(eventDate.getDate() + day - 1);
-    var now = new Date();
-    var today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    return eventDate < today;
+  function timeText(ev) {
+    if (ev.mode === "deadline") return "Hạn trong ngày";
+    if (ev.mode === "allday") return "Cả ngày";
+    if (ev.mode === "session") return "";
+    return hText(ev.start) + (ev.end ? " – " + hText(ev.end) : "");
   }
 
-  function todayColumn(week) {
-    if (!week) return -1;
-    var now = new Date(); now.setHours(0, 0, 0, 0);
-    var start = parse(week.from), end = parse(week.to);
-    if (now < start || now > end) return -1;
-    return Math.round((now - start) / 86400000) + 1;
+  function linesOf(ev) {
+    var out = [ev.title];
+    String(ev.info || "").split("\n").forEach(function (l) { if (l.trim()) out.push(l.trim()); });
+    var t = timeText(ev); if (t) out.push(t);
+    if (ev.location) out.push(ev.location);
+    return out;
   }
 
-  var DAY_NAMES = ["THỨ HAI", "THỨ 3", "THỨ 4", "THỨ 5", "THỨ 6", "THỨ 7", "CHỦ NHẬT"];
-  function renderHeads(week) {
-    document.querySelectorAll(".week-table th.dh").forEach(function (th, i) {
-      th.innerHTML = "";
-      th.appendChild(el("div", "dname", DAY_NAMES[i]));
-      if (week) {
-        var d = parse(week.from); d.setDate(d.getDate() + i);
-        var s = String(d.getDate()).padStart(2, "0") + "/" + String(d.getMonth() + 1).padStart(2, "0") + "/" + d.getFullYear();
-        th.appendChild(el("div", "ddate", "(" + s + ")"));
-        var today = new Date(); today.setHours(0, 0, 0, 0);
-        if (d < today) th.classList.add("past-date-head");
-      }
+  function hasLessonOverride(ev) {
+    return ev.lessons !== undefined && ev.lessons !== null && ev.lessons !== "" && !isNaN(Number(ev.lessons));
+  }
+  function durationMin(ev) {
+    if (ev.mode !== "time" || !ev.start || !ev.end) return null;
+    var d = minutes(ev.end) - minutes(ev.start);
+    return d > 0 ? d : null;
+  }
+  function autoLessons(ev) {
+    var d = durationMin(ev);
+    return d == null ? null : Math.max(1, Math.round(d / MIN_PER_LESSON));
+  }
+  // Trả về { value, missing }: missing = cần bổ sung giờ để tính tiết
+  function lessonsOf(ev) {
+    if (hasLessonOverride(ev)) return { value: Number(ev.lessons), missing: false };
+    if (ev.mode === "deadline") return { value: 0, missing: false };
+    var a = autoLessons(ev);
+    return a == null ? { value: 0, missing: true } : { value: a, missing: false };
+  }
+
+  function sortEvents(list) {
+    return list.slice().sort(function (x, y) {
+      if (x.date !== y.date) return x.date < y.date ? -1 : 1;
+      var rx = rowsOf(x)[0], ry = rowsOf(y)[0];
+      if (rx !== ry) return rx - ry;
+      return (x.start || SESSION_START[x.session] || "99").localeCompare(y.start || SESSION_START[y.session] || "99");
     });
   }
 
-  function renderTable(week) {
-    renderHeads(week);
-    var body = $("#weekBody");
-    body.innerHTML = "";
-    var items = week ? week.items || [] : [];
-    var rows = MIN_ROWS;
-    items.forEach(function (it) { if (it.row > rows) rows = it.row; });
-    var tcol = todayColumn(week);
-    var spanUntil = {};
-
-    for (var r = 1; r <= rows; r++) {
-      var tr = el("tr", "time-slot-row time-slot-row-" + r + (r === 4 ? " deadline-row" : ""));
-      for (var d = 1; d <= 7; d++) {
-        if (spanUntil[d] >= r) continue;
-        var td = el("td");
-        if (d === tcol) td.classList.add("today-col");
-        if (isPastDate(week, d)) td.classList.add("past-date-cell");
-        var cellItems = items.filter(function (it) { return it.day === d && it.row === r; });
-        cellItems.forEach(function (it) {
-          td.classList.add("filled");
-          if (r === 4 || it.fixedDate) td.classList.add("fixed-date-cell");
-          if (it.span > 1) {
-            td.rowSpan = it.span;
-            spanUntil[d] = r + it.span - 1;
-          }
-          var entry = el("div", "schedule-entry" + (r === 4 || it.fixedDate ? " fixed-date-entry" : ""));
-          (it.lines || []).forEach(function (line, i) {
-            entry.appendChild(el("div", i === 0 ? "first" : "", line));
-          });
-          td.appendChild(entry);
-        });
-        tr.appendChild(td);
-      }
-      body.appendChild(tr);
-    }
-
-    if (!week) {
-      var n = el("tr", "notice");
-      var c = el("td", "", "Chưa có lịch được ban hành.");
-      c.colSpan = 7; n.appendChild(c); body.appendChild(n);
-    }
+  function eventsOfView(view) {
+    var list = store.events || [];
+    if (view !== "overview") list = list.filter(function (e) { return e.category === view; });
+    return list.filter(function (e) { return validDate(e.date); });
   }
 
-  function renderOverview(week) {
-    renderHeads(week);
+  /* ---------- Điều hướng phân hệ ---------- */
+  function views() {
+    var v = [{ id: "overview", tab: "LỊCH TỔNG" }];
+    categories().forEach(function (c) { v.push({ id: c.id, tab: c.tab || c.name.toUpperCase() }); });
+    v.push({ id: "rmia", tab: "LỊCH R'MIA" });
+    v.push({ id: "stats", tab: "THỐNG KÊ" });
+    return v;
+  }
+  function viewTitle(id) {
+    var f = views().filter(function (v) { return v.id === id; })[0];
+    return f ? f.tab : "LỊCH TỔNG";
+  }
+  function viewExists(id) { return views().some(function (v) { return v.id === id; }); }
+
+  function renderNav() {
+    var nav = $("#navigation");
+    nav.innerHTML = "";
+    views().forEach(function (v) {
+      var b = el("button", "nav-item" + (v.id === state.view ? " active" : ""), v.tab);
+      b.type = "button";
+      b.dataset.view = v.id;
+      b.setAttribute("aria-current", v.id === state.view ? "page" : "false");
+      nav.appendChild(b);
+    });
+  }
+
+  /* ---------- Lịch tuần ---------- */
+  function weeksOf(view) {
+    var map = {};
+    eventsOfView(view).forEach(function (e) { map[mondayOf(e.date)] = true; });
+    map[mondayOf(todayISO())] = true;
+    if (state.weekFrom) map[state.weekFrom] = true;
+    return Object.keys(map).sort().reverse();
+  }
+
+  function renderHeads(from) {
+    var today = todayISO();
+    document.querySelectorAll(".week-table th.dh").forEach(function (th, i) {
+      th.innerHTML = "";
+      th.classList.remove("past-date-head", "today-head");
+      th.appendChild(el("div", "dname", DAY_NAMES[i]));
+      var day = addDays(from, i);
+      th.appendChild(el("div", "ddate", "(" + fmt(day) + ")"));
+      if (day < today) th.classList.add("past-date-head");
+      if (day === today) th.classList.add("today-head");
+    });
+  }
+
+  // Sắp xếp công việc của một ngày vào các ô; chỉ gộp hàng khi không chồng lấn
+  function layoutDay(dayEvents) {
+    var cells = { 1: [], 2: [], 3: [], 4: [] };
+    dayEvents.forEach(function (ev) { var r = rowsOf(ev); cells[r[0]].push({ ev: ev, end: r[1] }); });
+    var spans = { 1: 1, 2: 1, 3: 1, 4: 1 };
+    for (var r = 1; r <= 3; r++) {
+      if (!cells[r].length) continue;
+      var maxEnd = Math.max.apply(null, cells[r].map(function (c) { return c.end; }));
+      var free = true;
+      for (var k = r + 1; k <= maxEnd; k++) if (cells[k].length) free = false;
+      if (free && maxEnd > r) { spans[r] = maxEnd - r + 1; r = maxEnd; }
+    }
+    return { cells: cells, spans: spans };
+  }
+
+  function renderWeek() {
+    var overview = state.view === "overview";
+    var from = state.weekFrom;
+    renderHeads(from);
     var body = $("#weekBody");
     body.innerHTML = "";
-    if (!week) {
-      var empty = el("tr", "notice");
-      var msg = el("td", "", "Chưa có lịch được ban hành.");
-      msg.colSpan = 7; empty.appendChild(msg); body.appendChild(empty);
-      return;
+    var list = eventsOfView(state.view);
+    var today = todayISO();
+    var layouts = [];
+    for (var i = 0; i < 7; i++) {
+      var day = addDays(from, i);
+      layouts.push(layoutDay(sortEvents(list.filter(function (e) { return e.date === day; }))));
     }
-    var categoryNames = TITLES;
-    var spanUntil = {};
-    for (var session = 1; session <= 4; session++) {
-      var tr = el("tr", "overview-row time-slot-row time-slot-row-" + session + (session === 4 ? " deadline-row" : ""));
-      for (var day = 1; day <= 7; day++) {
-        if (spanUntil[day] >= session) continue;
-        var td = el("td", "overview-day");
-        var events = [];
-        Object.keys(categoryNames).forEach(function (type) {
-          if (type === "overview" || type === "rmia") return;
-          (DATA[type] || []).forEach(function (w) {
-            if (w.from !== week.from || w.to !== week.to) return;
-            (w.items || []).forEach(function (item) {
-              if (item.day === day && Number(item.row || 1) === session) {
-                events.push({ type: type, lines: item.lines || [], span: Number(item.span || 1), fixedDate: !!item.fixedDate });
-              }
-            });
-          });
-        });
-        if (day === todayColumn(week)) td.classList.add("today-col");
-        if (isPastDate(week, day)) td.classList.add("past-date-cell");
-        if (events.some(function (event) { return event.fixedDate || session === 4; })) td.classList.add("fixed-date-cell");
-        if (events.length === 1 && events[0].span > 1) {
-          td.rowSpan = events[0].span;
-          spanUntil[day] = session + events[0].span - 1;
+    var covered = {};
+    for (var r = 1; r <= 4; r++) {
+      var tr = el("tr", (overview ? "overview-row " : "") + "time-slot-row time-slot-row-" + r + (r === 4 ? " deadline-row" : ""));
+      for (var d = 0; d < 7; d++) {
+        if (covered[d + "-" + r]) continue;
+        var dayISO = addDays(from, d);
+        var lay = layouts[d];
+        var items = lay.cells[r];
+        var td = el("td", overview ? "overview-day" : "");
+        td.dataset.label = DAY_SHORT[d] + " · " + (r === 4 ? "Hạn" : SESSION_NAMES[r]);
+        if (dayISO === today) td.classList.add("today-col");
+        if (dayISO < today) td.classList.add("past-date-cell");
+        if (lay.spans[r] > 1) {
+          td.rowSpan = lay.spans[r];
+          for (var k = r + 1; k < r + lay.spans[r]; k++) covered[d + "-" + k] = true;
         }
-        events.forEach(function (event) {
-          var card = el("div", "overview-event" + (session === 4 || event.fixedDate ? " fixed-date-event" : ""));
-          card.appendChild(el("div", "overview-category", categoryNames[event.type]));
-          (event.lines || []).forEach(function (line, i) {
-            card.appendChild(el("div", i === 0 ? "first" : "overview-detail", line));
-          });
-          td.appendChild(card);
-        });
-        if (!events.length) td.appendChild(el("div", "overview-empty", "—"));
+        if (items.length) td.classList.add("filled");
+        if (r === 4 && items.length) td.classList.add("fixed-date-cell");
+        items.forEach(function (it) { td.appendChild(cardOf(it.ev, overview, r === 4)); });
+        if (!items.length && overview) td.appendChild(el("div", "overview-empty", "—"));
+        if (token) td.appendChild(addSlotButton(dayISO, r));
         tr.appendChild(td);
       }
       body.appendChild(tr);
     }
+    renderWeekList();
   }
 
-  function pushWorkHistory() {
-    history.pushState({ pnWorkState: { view: state.view, weekIndex: state.weekIndex, classIndex: state.classIndex } }, "", location.href);
+  function cardOf(ev, overview, deadline) {
+    var card;
+    if (overview) {
+      card = el("div", "overview-event" + (deadline ? " fixed-date-event" : ""));
+      card.appendChild(el("div", "overview-category", catName(ev.category)));
+      linesOf(ev).forEach(function (l, i) { card.appendChild(el("div", i === 0 ? "first" : "overview-detail", l)); });
+    } else {
+      card = el("div", "schedule-entry" + (deadline ? " fixed-date-entry" : ""));
+      linesOf(ev).forEach(function (l, i) { card.appendChild(el("div", i === 0 ? "first" : "", l)); });
+    }
+    if (token) {
+      card.classList.add("editable");
+      card.tabIndex = 0;
+      card.setAttribute("role", "button");
+      card.setAttribute("aria-label", "Sửa: " + ev.title);
+      card.addEventListener("click", function () { openForm(ev); });
+      card.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openForm(ev); } });
+    }
+    return card;
   }
 
-  function renderWeekList(weeks) {
+  function addSlotButton(dayISO, row) {
+    var b = el("button", "add-slot", "+");
+    b.type = "button";
+    b.title = "Thêm công việc " + (row === 4 ? "chốt hạn" : "buổi " + SESSION_NAMES[row].toLowerCase()) + " ngày " + fmt(dayISO);
+    b.setAttribute("aria-label", b.title);
+    b.addEventListener("click", function (e) {
+      e.stopPropagation();
+      var preset = { date: dayISO, category: state.view !== "overview" ? state.view : "" };
+      if (row === 4) preset.mode = "deadline";
+      else { preset.mode = "time"; preset.start = SESSION_START[row]; preset.session = row; }
+      openForm(null, preset);
+    });
+    return b;
+  }
+
+  function renderWeekList() {
     var list = $("#weekList");
     list.innerHTML = "";
-    if (!weeks.length) return;
-    weeks.forEach(function (w, i) {
+    weeksOf(state.view).forEach(function (w) {
       var li = el("li");
-      var b = el("button", "week-btn" + (i === state.weekIndex ? " active" : ""));
+      var on = w === state.weekFrom;
+      var b = el("button", "week-btn" + (on ? " active" : ""));
       b.type = "button";
-      b.setAttribute("aria-pressed", i === state.weekIndex ? "true" : "false");
+      b.setAttribute("aria-pressed", on ? "true" : "false");
       var label = el("span", "label");
-      label.appendChild(document.createTextNode("- Tuần từ " + fmt(w.from) + " - "));
-      label.appendChild(el("span", "to", fmt(w.to)));
+      label.appendChild(document.createTextNode("- Tuần từ " + fmt(w) + " - "));
+      label.appendChild(el("span", "to", fmt(addDays(w, 6))));
       b.appendChild(label);
-      b.addEventListener("click", function () { if (state.weekIndex === i) return; state.weekIndex = i; pushWorkHistory(); render(); });
+      b.addEventListener("click", function () { if (on) return; goWeek(w); });
       li.appendChild(b);
       list.appendChild(li);
     });
   }
 
+  function goWeek(from) {
+    state.weekFrom = from;
+    pushHistory();
+    render();
+  }
+
+  /* ---------- Lịch R'Mia (thời khóa biểu cố định) ---------- */
   function cellNode(tag, c) {
     var n = el(tag);
     if (c && typeof c === "object") {
       if (c.rs > 1) n.rowSpan = c.rs;
       if (c.tone) n.className = "tone-" + c.tone;
-      String(c.t || "").split("\n").forEach(function (line, i) {
-        n.appendChild(el("div", i === 0 ? "first" : "sub", line));
-      });
+      String(c.t || "").split("\n").forEach(function (line, i) { n.appendChild(el("div", i === 0 ? "first" : "sub", line)); });
     } else {
       n.textContent = c || "";
     }
@@ -220,27 +305,20 @@
   function renderTimetable() {
     var sw = $("#classSwitch"), table = $("#ttTable"), notes = $("#ttNotes");
     sw.innerHTML = ""; table.innerHTML = ""; notes.innerHTML = "";
-    if (!RMIA.length) {
-      $("#ttNote").textContent = "Chưa có thời khóa biểu.";
-      return;
-    }
+    if (!RMIA.length) { $("#ttNote").textContent = "Chưa có thời khóa biểu."; return; }
     if (state.classIndex >= RMIA.length) state.classIndex = 0;
     RMIA.forEach(function (k, i) {
       var b = el("button", "class-btn" + (i === state.classIndex ? " active" : ""), k.name);
       b.type = "button"; b.setAttribute("role", "tab");
       b.setAttribute("aria-selected", i === state.classIndex ? "true" : "false");
-      b.addEventListener("click", function () { if (state.classIndex === i) return; state.classIndex = i; pushWorkHistory(); renderTimetable(); });
+      b.addEventListener("click", function () { if (state.classIndex === i) return; state.classIndex = i; pushHistory(); renderTimetable(); });
       sw.appendChild(b);
     });
     var k = RMIA[state.classIndex];
     $("#ttNote").textContent = k.note || "";
-
     var thead = el("thead"), hr = el("tr");
-    ["BUỔI", "TIẾT", "THỜI GIAN"].concat(k.days).forEach(function (h, i) {
-      hr.appendChild(el("th", i < 3 ? "meta" : "", h));
-    });
+    ["BUỔI", "TIẾT", "THỜI GIAN"].concat(k.days).forEach(function (h, i) { hr.appendChild(el("th", i < 3 ? "meta" : "", h)); });
     thead.appendChild(hr); table.appendChild(thead);
-
     var tbody = el("tbody");
     k.sessions.forEach(function (s, si) {
       s.rows.forEach(function (r, ri) {
@@ -267,49 +345,232 @@
     (k.notes || []).forEach(function (t) { notes.appendChild(el("li", "", t)); });
   }
 
-  function render() {
-    var isTT = state.view === "rmia";
-    $("#weekPanel").hidden = isTT;
-    $("#ttPanel").hidden = !isTT;
-    var weeks = weeksOf(state.view);
-    if (state.weekIndex >= weeks.length) state.weekIndex = 0;
-    var week = weeks[state.weekIndex];
-    $("#sectionTitle").textContent = TITLES[state.view];
-    $("#weekCaption").textContent = TITLES[state.view] + (week ? " — tuần " + fmt(week.from) + " đến " + fmt(week.to) : "");
-    document.querySelectorAll(".nav-item").forEach(function (b) {
-      var on = b.dataset.view === state.view;
-      b.classList.toggle("active", on);
-      b.setAttribute("aria-current", on ? "page" : "false");
-    });
-    if (isTT) { renderTimetable(); return; }
-    if (state.view === "overview") renderOverview(week);
-    else renderTable(week);
-    renderWeekList(weeks);
+  /* ---------- Thống kê ---------- */
+  var QUARTER_NAMES = { 1: "I", 2: "II", 3: "III", 4: "IV" };
+
+  function statsRange() {
+    var mode = $("#statsMode").value;
+    var y = Number($("#statsYear").value) || new Date().getFullYear();
+    if (mode === "month") {
+      var m = $("#statsMonth").value || todayISO().slice(0, 7);
+      var p = m.split("-");
+      var last = new Date(+p[0], +p[1], 0).getDate();
+      return { from: m + "-01", to: m + "-" + pad(last), label: "Tháng " + (+p[1]) + "/" + p[0], file: "thang-" + p[1] + "-" + p[0] };
+    }
+    if (mode === "quarter") {
+      var q = Number($("#statsQuarter").value) || 1;
+      var sm = (q - 1) * 3 + 1, em = sm + 2;
+      return { from: y + "-" + pad(sm) + "-01", to: y + "-" + pad(em) + "-" + pad(new Date(y, em, 0).getDate()), label: "Quý " + QUARTER_NAMES[q] + "/" + y, file: "quy-" + q + "-" + y };
+    }
+    return { from: y + "-01-01", to: y + "-12-31", label: "Năm " + y, file: "nam-" + y };
   }
 
-  function activate(view, historyMode) {
-    if (!TITLES[view]) view = "teaching";
+  function computeStats() {
+    var range = statsRange();
+    var inRange = sortEvents((store.events || []).filter(function (e) { return validDate(e.date) && e.date >= range.from && e.date <= range.to; }));
+    var groups = categories().map(function (c) { return { cat: c, items: [], lessons: 0, missing: 0 }; });
+    var other = { cat: { id: "_", name: "Chưa phân loại" }, items: [], lessons: 0, missing: 0 };
+    inRange.forEach(function (e) {
+      var g = groups.filter(function (x) { return x.cat.id === e.category; })[0] || other;
+      var l = lessonsOf(e);
+      g.items.push({ ev: e, lessons: l });
+      g.lessons += l.value;
+      if (l.missing) g.missing++;
+    });
+    if (other.items.length) groups.push(other);
+    return { range: range, groups: groups, total: inRange.length };
+  }
+
+  function numText(n) { return (Math.round(n * 10) / 10).toLocaleString("vi-VN"); }
+
+  function renderStats() {
+    var s = computeStats();
+    $("#statsRange").textContent = s.range.label + " (" + fmt(s.range.from) + " – " + fmt(s.range.to) + ") · " + s.total + " công việc";
+    var t = $("#statsSummary");
+    t.innerHTML = "";
+    var thead = el("thead"), hr = el("tr");
+    ["Hạng mục", "Số buổi / việc", "Số tiết", "Chưa đủ giờ"].forEach(function (h) { hr.appendChild(el("th", "", h)); });
+    thead.appendChild(hr); t.appendChild(thead);
+    var tb = el("tbody"), sumN = 0, sumL = 0, sumM = 0;
+    s.groups.forEach(function (g) {
+      var tr = el("tr", g.items.length ? "" : "zero");
+      tr.appendChild(el("th", "", g.cat.name));
+      tr.appendChild(el("td", "num", String(g.items.length)));
+      tr.appendChild(el("td", "num", numText(g.lessons)));
+      tr.appendChild(el("td", "num" + (g.missing ? " warn" : ""), g.missing ? String(g.missing) : "—"));
+      tb.appendChild(tr);
+      sumN += g.items.length; sumL += g.lessons; sumM += g.missing;
+    });
+    var ft = el("tr", "total");
+    ft.appendChild(el("th", "", "TỔNG CỘNG"));
+    ft.appendChild(el("td", "num", String(sumN)));
+    ft.appendChild(el("td", "num", numText(sumL)));
+    ft.appendChild(el("td", "num" + (sumM ? " warn" : ""), sumM ? String(sumM) : "—"));
+    tb.appendChild(ft);
+    t.appendChild(tb);
+
+    var box = $("#statsDetail");
+    box.innerHTML = "";
+    s.groups.forEach(function (g) {
+      if (!g.items.length) return;
+      var sec = el("section", "stats-group");
+      sec.appendChild(el("h3", "stats-group-title", g.cat.name.toUpperCase() + " · " + g.items.length + " việc · " + numText(g.lessons) + " tiết"));
+      var wrap = el("div", "table-wrap");
+      var tbl = el("table", "stats-table detail");
+      var th = el("thead"), r0 = el("tr");
+      ["Ngày", "Thời gian", "Công việc", "Thông tin khác", "Địa điểm", "Số tiết"].forEach(function (h) { r0.appendChild(el("th", "", h)); });
+      th.appendChild(r0); tbl.appendChild(th);
+      var b = el("tbody");
+      g.items.forEach(function (it) {
+        var e = it.ev, tr = el("tr");
+        tr.appendChild(el("td", "nowrap", DAY_SHORT[weekdayIndex(e.date)] + ", " + fmt(e.date)));
+        tr.appendChild(el("td", "nowrap", timeText(e) || (e.mode === "session" ? SESSION_NAMES[e.session] : "")));
+        tr.appendChild(el("td", "strong", e.title));
+        tr.appendChild(el("td", "", String(e.info || "").split("\n").filter(Boolean).join("; ")));
+        tr.appendChild(el("td", "", e.location || ""));
+        var lc = el("td", "num" + (it.lessons.missing ? " warn" : ""), it.lessons.missing ? "chưa đủ giờ" : numText(it.lessons.value));
+        tr.appendChild(lc);
+        if (token) {
+          tr.classList.add("editable");
+          tr.title = "Bấm để sửa";
+          tr.addEventListener("click", function () { openForm(e); });
+        }
+        b.appendChild(tr);
+      });
+      tbl.appendChild(b);
+      wrap.appendChild(tbl);
+      sec.appendChild(wrap);
+      box.appendChild(sec);
+    });
+    if (!s.total) box.appendChild(el("p", "empty-note", "Không có công việc nào trong kỳ này."));
+  }
+
+  function exportRows() {
+    var s = computeStats();
+    var summary = [["THỐNG KÊ CÔNG VIỆC — " + s.range.label.toUpperCase()], ["Từ " + fmt(s.range.from) + " đến " + fmt(s.range.to)], [],
+      ["Hạng mục", "Số buổi / việc", "Số tiết", "Chưa đủ giờ"]];
+    var sumN = 0, sumL = 0, sumM = 0;
+    s.groups.forEach(function (g) {
+      summary.push([g.cat.name, g.items.length, Math.round(g.lessons * 10) / 10, g.missing]);
+      sumN += g.items.length; sumL += g.lessons; sumM += g.missing;
+    });
+    summary.push(["TỔNG CỘNG", sumN, Math.round(sumL * 10) / 10, sumM]);
+    var detail = [["Hạng mục", "Ngày", "Thứ", "Thời gian", "Công việc", "Thông tin khác", "Địa điểm", "Số tiết", "Ghi chú"]];
+    s.groups.forEach(function (g) {
+      g.items.forEach(function (it) {
+        var e = it.ev;
+        detail.push([g.cat.name, fmt(e.date), DAY_NAMES[weekdayIndex(e.date)], timeText(e) || (e.mode === "session" ? SESSION_NAMES[e.session] : ""),
+          e.title, String(e.info || "").split("\n").filter(Boolean).join("; "), e.location || "",
+          it.lessons.missing ? "" : it.lessons.value, it.lessons.missing ? "Chưa đủ giờ để tính tiết" : ""]);
+      });
+    });
+    return { s: s, summary: summary, detail: detail };
+  }
+
+  function loadScript(src) {
+    return new Promise(function (resolve, reject) {
+      var sc = document.createElement("script");
+      sc.src = src; sc.onload = resolve; sc.onerror = reject;
+      document.head.appendChild(sc);
+    });
+  }
+
+  function exportExcel() {
+    var data = exportRows();
+    var name = "thong-ke-cong-viec-" + data.s.range.file;
+    var go = function () {
+      var wb = XLSX.utils.book_new();
+      var ws1 = XLSX.utils.aoa_to_sheet(data.summary);
+      ws1["!cols"] = [{ wch: 28 }, { wch: 16 }, { wch: 10 }, { wch: 14 }];
+      var ws2 = XLSX.utils.aoa_to_sheet(data.detail);
+      ws2["!cols"] = [{ wch: 20 }, { wch: 12 }, { wch: 10 }, { wch: 16 }, { wch: 36 }, { wch: 28 }, { wch: 22 }, { wch: 8 }, { wch: 24 }];
+      XLSX.utils.book_append_sheet(wb, ws1, "Tổng hợp");
+      XLSX.utils.book_append_sheet(wb, ws2, "Chi tiết");
+      XLSX.writeFile(wb, name + ".xlsx");
+    };
+    if (window.XLSX) { go(); return; }
+    toast("Đang chuẩn bị tệp Excel…");
+    loadScript("https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js").then(go).catch(function () {
+      // Dự phòng: xuất CSV (Excel mở được) khi không tải được thư viện
+      var rows = data.summary.concat([[]], data.detail);
+      var csv = "﻿" + rows.map(function (r) {
+        return r.map(function (c) { var v = String(c == null ? "" : c); return /[",\n;]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }).join(",");
+      }).join("\r\n");
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+      a.download = name + ".csv";
+      a.click();
+      setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
+    });
+  }
+
+  function initStatsControls() {
+    var now = new Date();
+    $("#statsMonth").value = now.getFullYear() + "-" + pad(now.getMonth() + 1);
+    $("#statsYear").value = now.getFullYear();
+    $("#statsQuarter").value = String(Math.floor(now.getMonth() / 3) + 1);
+    var sync = function () {
+      var mode = $("#statsMode").value;
+      $("#statsMonthWrap").hidden = mode !== "month";
+      $("#statsQuarterWrap").hidden = mode !== "quarter";
+      $("#statsYearWrap").hidden = mode === "month";
+      renderStats();
+    };
+    $("#statsMode").addEventListener("change", sync);
+    ["statsMonth", "statsQuarter", "statsYear"].forEach(function (id) {
+      $("#" + id).addEventListener("change", renderStats);
+      $("#" + id).addEventListener("input", renderStats);
+    });
+    $("#exportExcel").addEventListener("click", exportExcel);
+  }
+
+  /* ---------- Hiển thị chung ---------- */
+  function render() {
+    renderNav();
+    var v = state.view;
+    $("#weekPanel").hidden = v === "rmia" || v === "stats";
+    $("#ttPanel").hidden = v !== "rmia";
+    $("#statsPanel").hidden = v !== "stats";
+    $("#sectionTitle").textContent = viewTitle(v);
+    document.body.classList.toggle("is-editor", !!token);
+    if (v === "rmia") { renderTimetable(); return; }
+    if (v === "stats") { renderStats(); return; }
+    if (!state.weekFrom) state.weekFrom = mondayOf(todayISO());
+    $("#weekCaption").textContent = viewTitle(v) + " — tuần " + fmt(state.weekFrom) + " đến " + fmt(addDays(state.weekFrom, 6));
+    renderWeek();
+  }
+
+  function historyState() { return { pnWorkState: { view: state.view, weekFrom: state.weekFrom, classIndex: state.classIndex } }; }
+  function pushHistory() { history.pushState(historyState(), "", "#" + state.view); }
+
+  function activate(view, mode) {
+    if (!viewExists(view)) view = "overview";
+    var changed = view !== state.view;
     state.view = view;
-    state.weekIndex = defaultWeekIndex(weeksOf(view));
-    if (historyMode === "replace") {
-      history.replaceState({ pnWorkState: { view: view, weekIndex: state.weekIndex, classIndex: state.classIndex } }, "", "#" + view);
-    } else if (historyMode !== "none" && location.hash.slice(1) !== view) {
-      history.pushState({ pnWorkState: { view: view, weekIndex: state.weekIndex, classIndex: state.classIndex } }, "", "#" + view);
-    }
+    if (changed || !state.weekFrom) state.weekFrom = mondayOf(todayISO());
+    if (mode === "replace") history.replaceState(historyState(), "", "#" + view);
+    else if (mode !== "none") pushHistory();
     render();
   }
 
   $("#navigation").addEventListener("click", function (e) {
     var b = e.target.closest("[data-view]");
-    if (b) activate(b.dataset.view);
+    if (b && b.dataset.view !== state.view) activate(b.dataset.view);
+  });
+  $("#prevWeek").addEventListener("click", function () { goWeek(addDays(state.weekFrom, -7)); });
+  $("#nextWeek").addEventListener("click", function () { goWeek(addDays(state.weekFrom, 7)); });
+  $("#thisWeek").addEventListener("click", function () { var m = mondayOf(todayISO()); if (m !== state.weekFrom) goWeek(m); });
+  $("#addEvent").addEventListener("click", function () {
+    var today = todayISO();
+    var d = (today >= state.weekFrom && today <= addDays(state.weekFrom, 6)) ? today : state.weekFrom;
+    openForm(null, { date: d, category: state.view !== "overview" ? state.view : "", mode: "time" });
   });
 
-  activate(location.hash.slice(1) || "overview", "replace");
   window.addEventListener("popstate", function (event) {
     var saved = event.state && event.state.pnWorkState;
-    if (saved && TITLES[saved.view]) {
+    if (saved && viewExists(saved.view)) {
       state.view = saved.view;
-      state.weekIndex = Number.isInteger(saved.weekIndex) ? saved.weekIndex : 0;
+      state.weekFrom = validDate(saved.weekFrom) ? saved.weekFrom : mondayOf(todayISO());
       state.classIndex = Number.isInteger(saved.classIndex) ? saved.classIndex : 0;
       render();
       return;
@@ -317,45 +578,311 @@
     activate(location.hash.slice(1) || "overview", "none");
   });
 
-  // Tự cập nhật theo đồng hồ thiết bị, không cần tải lại trang.
+  // Cập nhật làm mờ ngày đã qua theo đồng hồ thiết bị
   window.setInterval(function () {
-    if (state.view !== "rmia" && !document.hidden) render();
-  }, 15000);
-  document.addEventListener("visibilitychange", function () {
-    if (!document.hidden && state.view !== "rmia") render();
+    if (document.hidden || anyDialogOpen()) return;
+    if (state.view !== "rmia" && state.view !== "stats") render();
+  }, 60000);
+
+  /* ---------- Thông báo ---------- */
+  var toastTimer = null;
+  function toast(msg, kind) {
+    var t = $("#toast");
+    t.textContent = msg;
+    t.className = "toast" + (kind ? " " + kind : "");
+    t.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.hidden = true; }, kind === "error" ? 8000 : 4500);
+  }
+  function setSyncNote() {
+    var n = $("#syncNote");
+    n.textContent = token ? "Đang ở chế độ biên tập · bấm vào công việc để sửa, bấm “+” ở ô để thêm" : "";
+  }
+
+  /* ---------- GitHub Contents API ---------- */
+  function b64encode(str) {
+    var bytes = new TextEncoder().encode(str), bin = "";
+    for (var i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+    return btoa(bin);
+  }
+  function b64decode(b64) {
+    var bin = atob(String(b64).replace(/\s/g, "")), bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return new TextDecoder().decode(bytes);
+  }
+  function apiUrl(path) { return "https://api.github.com/repos/" + GH.owner + "/" + GH.repo + path; }
+  function ghFetch(path, opt, tk) {
+    opt = opt || {};
+    var headers = { "Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28", "Authorization": "Bearer " + (tk || token) };
+    if (opt.body) headers["Content-Type"] = "application/json";
+    return fetch(apiUrl(path), { method: opt.method || "GET", headers: headers, body: opt.body, cache: "no-store" });
+  }
+  function ghError(res, fallback) {
+    if (res.status === 401) return "Mã truy cập không hợp lệ hoặc đã hết hạn. Hãy bật lại chế độ biên tập với mã mới.";
+    if (res.status === 403 || res.status === 404) return "Mã truy cập chưa có quyền ghi vào kho Phuc-nguyen-work (cần Contents: Read and write).";
+    return fallback + " (mã lỗi " + res.status + ").";
+  }
+  function readRemote() {
+    return ghFetch("/contents/" + GH.dataPath + "?ref=" + encodeURIComponent(GH.branch)).then(function (res) {
+      if (!res.ok) throw new Error(ghError(res, "Không đọc được dữ liệu trên GitHub"));
+      return res.json();
+    }).then(function (j) {
+      return { data: normalize(JSON.parse(b64decode(j.content))), sha: j.sha };
+    });
+  }
+
+  // Ghi một thay đổi: đọc bản mới nhất, áp dụng thay đổi, ghi lại; thử lại một lần nếu xung đột
+  function commit(mutate, message, attempt) {
+    attempt = attempt || 1;
+    return readRemote().then(function (cur) {
+      var data = cur.data;
+      mutate(data);
+      data.updated = new Date().toISOString();
+      var body = JSON.stringify({ message: message, content: b64encode(JSON.stringify(data, null, 2) + "\n"), sha: cur.sha, branch: GH.branch });
+      return ghFetch("/contents/" + GH.dataPath, { method: "PUT", body: body }).then(function (res) {
+        if ((res.status === 409 || res.status === 422) && attempt < 2) return commit(mutate, message, attempt + 1);
+        if (!res.ok) throw new Error(ghError(res, "Không lưu được lên GitHub"));
+        return res.json().then(function (j) {
+          store = data; sha = j.content && j.content.sha;
+          return data;
+        });
+      });
+    });
+  }
+
+  function normalize(d) {
+    d = d && typeof d === "object" ? d : {};
+    if (!Array.isArray(d.categories)) d.categories = [];
+    if (!Array.isArray(d.events)) d.events = [];
+    return d;
+  }
+
+  /* ---------- Biểu mẫu công việc ---------- */
+  var form = $("#eventForm");
+  var dlg = $("#eventDialog");
+
+  function anyDialogOpen() { return $("#eventDialog").open || $("#tokenDialog").open; }
+
+  function fillCategorySelect(selected) {
+    var sel = $("#categorySelect");
+    sel.innerHTML = "";
+    var ph = el("option", "", "— Chọn phân loại —"); ph.value = ""; sel.appendChild(ph);
+    categories().forEach(function (c) { var o = el("option", "", c.name); o.value = c.id; sel.appendChild(o); });
+    var add = el("option", "", "+ Thêm loại mới…"); add.value = "__new"; sel.appendChild(add);
+    sel.value = selected && catById(selected) ? selected : "";
+    $("#newCategoryWrap").hidden = true;
+  }
+
+  function syncMode() {
+    var mode = form.elements.mode.value;
+    $("#timeWrap").hidden = mode !== "time";
+    $("#sessionWrap").hidden = mode !== "session";
+    updateLessonHint();
+  }
+
+  function updateLessonHint() {
+    var ev = { mode: form.elements.mode.value, start: form.elements.start.value, end: form.elements.end.value };
+    var a = autoLessons(ev);
+    var h = $("#lessonHint");
+    if (ev.mode === "deadline") h.textContent = "(việc chốt hạn: mặc định 0 tiết)";
+    else if (a != null) h.textContent = "(để trống: tự tính " + a + " tiết)";
+    else h.textContent = "(để trống: tự tính khi có đủ giờ bắt đầu và kết thúc)";
+  }
+
+  function openForm(ev, preset) {
+    if (!token) return;
+    editingId = ev ? ev.id : null;
+    var src = ev || preset || {};
+    form.reset();
+    $("#formError").textContent = "";
+    $("#eventDialogTitle").textContent = ev ? "SỬA CÔNG VIỆC" : "THÊM CÔNG VIỆC";
+    fillCategorySelect(src.category);
+    form.elements.title.value = src.title || "";
+    form.elements.date.value = src.date || todayISO();
+    form.elements.mode.value = src.mode || "time";
+    form.elements.start.value = src.start || "";
+    form.elements.end.value = src.end || "";
+    form.elements.session.value = String(src.session || 1);
+    form.elements.location.value = src.location || "";
+    form.elements.info.value = src.info || "";
+    form.elements.lessons.value = hasLessonOverride(src) ? src.lessons : "";
+    $("#deleteEvent").hidden = !ev;
+    $("#duplicateEvent").hidden = !ev;
+    syncMode();
+    dlg.showModal();
+    setTimeout(function () { (ev ? form.elements.title : (src.category ? form.elements.title : $("#categorySelect"))).focus(); }, 30);
+  }
+
+  function readForm() {
+    var f = form.elements;
+    var ev = {
+      id: editingId || ("e" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6)),
+      title: f.title.value.trim(),
+      category: f.category.value,
+      date: f.date.value,
+      mode: f.mode.value,
+      location: f.location.value.trim(),
+      info: f.info.value.split("\n").map(function (l) { return l.trim(); }).filter(Boolean).join("\n")
+    };
+    if (ev.mode === "time") { ev.start = f.start.value; ev.end = f.end.value; }
+    if (ev.mode === "session") ev.session = Number(f.session.value) || 1;
+    if (f.lessons.value !== "") ev.lessons = Number(f.lessons.value);
+    return ev;
+  }
+
+  function validate(ev, newCat) {
+    if (!ev.title) return "Chưa nhập tên công việc.";
+    if (!ev.category) return "Chưa chọn phân loại.";
+    if (ev.category === "__new" && !newCat) return "Chưa nhập tên loại mới.";
+    if (!validDate(ev.date)) return "Chưa chọn ngày.";
+    if (ev.mode === "time" && !ev.start) return "Chưa nhập giờ bắt đầu (hoặc chọn “Theo buổi” nếu chưa rõ giờ).";
+    if (ev.mode === "time" && ev.end && minutes(ev.end) <= minutes(ev.start)) return "Giờ kết thúc phải sau giờ bắt đầu.";
+    if (ev.lessons !== undefined && (isNaN(ev.lessons) || ev.lessons < 0)) return "Số tiết không hợp lệ.";
+    return "";
+  }
+
+  function busy(on) {
+    form.querySelectorAll("button").forEach(function (b) { b.disabled = on; });
+    $("#saveEvent").textContent = on ? "Đang lưu…" : "Lưu";
+  }
+
+  function afterSave(ev, msg) {
+    dlg.close();
+    if (ev && state.view !== "stats") {
+      if (state.view !== "overview" && state.view !== ev.category) state.view = "overview";
+      state.weekFrom = mondayOf(ev.date);
+      history.replaceState(historyState(), "", "#" + state.view);
+    }
+    render();
+    toast(msg + " Trang công khai cập nhật sau khoảng 1–2 phút.", "ok");
+  }
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    var ev = readForm();
+    var newCat = form.elements.newCategory.value.trim();
+    var err = validate(ev, newCat);
+    if (err) { $("#formError").textContent = err; return; }
+    var catToAdd = null;
+    if (ev.category === "__new") {
+      var exist = categories().filter(function (c) { return c.name.toLowerCase() === newCat.toLowerCase(); })[0];
+      if (exist) ev.category = exist.id;
+      else {
+        var id = slug(newCat), n = 2, base = id;
+        while (catById(id) || id === "overview" || id === "rmia" || id === "stats") id = base + "-" + (n++);
+        catToAdd = { id: id, name: newCat, tab: newCat.toUpperCase() };
+        ev.category = id;
+      }
+    }
+    var isEdit = !!editingId;
+    busy(true);
+    commit(function (data) {
+      if (catToAdd && !data.categories.some(function (c) { return c.id === catToAdd.id; })) data.categories.push(catToAdd);
+      var i = data.events.findIndex(function (x) { return x.id === ev.id; });
+      if (i >= 0) data.events[i] = ev; else data.events.push(ev);
+    }, (isEdit ? "Sửa" : "Thêm") + " công việc: " + ev.title + " (" + fmt(ev.date) + ")")
+      .then(function () { afterSave(ev, isEdit ? "Đã lưu thay đổi." : "Đã thêm công việc."); })
+      .catch(function (x) { $("#formError").textContent = x.message || "Không lưu được."; })
+      .then(function () { busy(false); });
   });
 
-  // Khi API được cấu hình và người dùng đã đăng nhập, lịch lưu trên D1
-  // được ưu tiên hiển thị; dữ liệu tĩnh vẫn là phương án dự phòng khi offline.
-  var apiBase = window.PNW_CONFIG && window.PNW_CONFIG.apiBaseUrl;
-  if (apiBase) {
-    fetch((apiBase.endsWith("/") ? apiBase.slice(0,-1) : apiBase) + "/api/schedules", { credentials: "include" })
-      .then(function (res) { if (!res.ok) throw new Error("schedule_api_unavailable"); return res.json(); })
-      .then(function (data) {
-        var grouped = {};
-        (data.items || []).forEach(function (item) {
-          var dt = new Date(item.start_at), day = (dt.getDay() + 6) % 7 + 1;
-          var monday = new Date(dt); monday.setHours(0,0,0,0); monday.setDate(monday.getDate() - day + 1);
-          var sunday = new Date(monday); sunday.setDate(sunday.getDate() + 6);
-          function iso(d) { return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
-          var from = iso(monday), key = item.type + "|" + from;
-          if (!grouped[key]) grouped[key] = { from:from, to:iso(sunday), items:[] , type:item.type };
-          var hour = dt.getHours(), row = hour >= 17 ? 3 : (hour >= 12 ? 2 : 1);
-          var lines = [item.title];
-          if (item.location) lines.push(item.location);
-          lines.push(String(hour).padStart(2,"0")+":"+String(dt.getMinutes()).padStart(2,"0"));
-          grouped[key].items.push({ day:day, row:row, lines:lines });
-        });
-        Object.keys(grouped).forEach(function (key) {
-          var w = grouped[key], type = w.type;
-          if (!DATA[type]) DATA[type] = [];
-          DATA[type].push({ from:w.from, to:w.to, items:w.items });
-        });
-        Object.keys(DATA).forEach(function (type) {
-          if (Array.isArray(DATA[type])) DATA[type].sort(function(a,b){return parse(b.from)-parse(a.from);});
-        });
-        state.weekIndex = defaultWeekIndex(weeksOf(state.view));
-        render();
-      }).catch(function () {});
+  $("#deleteEvent").addEventListener("click", function () {
+    if (!editingId) return;
+    var id = editingId;
+    var ev = (store.events || []).filter(function (x) { return x.id === id; })[0];
+    if (!window.confirm("Xóa công việc “" + (ev ? ev.title : "") + "”? Thao tác này xóa khỏi lịch và thống kê.")) return;
+    busy(true);
+    commit(function (data) { data.events = data.events.filter(function (x) { return x.id !== id; }); },
+      "Xóa công việc: " + (ev ? ev.title + " (" + fmt(ev.date) + ")" : id))
+      .then(function () { afterSave(null, "Đã xóa công việc."); })
+      .catch(function (x) { $("#formError").textContent = x.message || "Không xóa được."; })
+      .then(function () { busy(false); });
+  });
+
+  $("#duplicateEvent").addEventListener("click", function () {
+    var ev = readForm();
+    editingId = null;
+    $("#eventDialogTitle").textContent = "NHÂN BẢN CÔNG VIỆC";
+    $("#deleteEvent").hidden = true;
+    $("#duplicateEvent").hidden = true;
+    $("#formError").textContent = "Đã tạo bản sao. Hãy chọn ngày mới rồi bấm Lưu.";
+    form.elements.date.value = addDays(ev.date || todayISO(), 7);
+    form.elements.date.focus();
+  });
+
+  $("#categorySelect").addEventListener("change", function () {
+    var isNew = this.value === "__new";
+    $("#newCategoryWrap").hidden = !isNew;
+    if (isNew) form.elements.newCategory.focus();
+  });
+  form.querySelectorAll("input[name=mode]").forEach(function (r) { r.addEventListener("change", syncMode); });
+  form.elements.start.addEventListener("input", updateLessonHint);
+  form.elements.end.addEventListener("input", updateLessonHint);
+
+  document.querySelectorAll("dialog [data-close]").forEach(function (b) {
+    b.addEventListener("click", function () { b.closest("dialog").close(); });
+  });
+
+  /* ---------- Bật, tắt chế độ biên tập ---------- */
+  function readToken() { try { return localStorage.getItem(TOKEN_KEY); } catch (e) { return null; } }
+  function saveToken(t) { try { if (t) localStorage.setItem(TOKEN_KEY, t); else localStorage.removeItem(TOKEN_KEY); } catch (e) { /* bỏ qua */ } }
+
+  function updateEditorToggle() {
+    var b = $("#editorToggle");
+    b.textContent = token ? "THOÁT BIÊN TẬP" : "BIÊN TẬP";
+    b.classList.toggle("on", !!token);
+    setSyncNote();
   }
+
+  $("#editorToggle").addEventListener("click", function () {
+    if (token) {
+      if (!window.confirm("Thoát chế độ biên tập trên máy này? Mã truy cập sẽ được xóa khỏi trình duyệt.")) return;
+      token = null; saveToken(null);
+      updateEditorToggle(); render();
+      return;
+    }
+    $("#tokenForm").reset();
+    $("#tokenError").textContent = "";
+    $("#tokenDialog").showModal();
+  });
+
+  $("#tokenForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var tk = this.elements.token.value.trim();
+    if (!tk) { $("#tokenError").textContent = "Chưa dán mã truy cập."; return; }
+    $("#tokenError").textContent = "Đang kiểm tra quyền…";
+    ghFetch("", {}, tk).then(function (res) {
+      if (!res.ok) throw new Error(ghError(res, "Không kiểm tra được mã truy cập"));
+      return res.json();
+    }).then(function (repo) {
+      if (repo.permissions && repo.permissions.push === false) throw new Error("Mã truy cập này chỉ có quyền đọc. Cần quyền Contents: Read and write.");
+      token = tk; saveToken(tk);
+      $("#tokenDialog").close();
+      updateEditorToggle();
+      return loadFromGitHub().then(function () { toast("Đã bật chế độ biên tập.", "ok"); });
+    }).catch(function (x) { $("#tokenError").textContent = x.message || "Không bật được chế độ biên tập."; });
+  });
+
+  /* ---------- Tải dữ liệu ---------- */
+  function loadPublic() {
+    return fetch("./data/events.json?t=" + Date.now(), { cache: "no-store" }).then(function (res) {
+      if (!res.ok) throw new Error("load");
+      return res.json();
+    }).then(function (d) { store = normalize(d); });
+  }
+  function loadFromGitHub() {
+    return readRemote().then(function (cur) { store = cur.data; sha = cur.sha; render(); })
+      .catch(function (x) { toast(x.message || "Không đọc được dữ liệu từ GitHub.", "error"); });
+  }
+
+  initStatsControls();
+  token = readToken();
+  updateEditorToggle();
+  var startView = location.hash.slice(1) || "overview";
+  loadPublic().catch(function () {
+    toast("Chưa tải được dữ liệu lịch. Hãy tải lại trang.", "error");
+  }).then(function () {
+    activate(startView, "replace");
+    if (token) loadFromGitHub();
+  });
 })();

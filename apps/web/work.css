@@ -1,0 +1,112 @@
+/* Phúc Nguyên Work — thêm, sửa công việc và thống kê (bổ sung cho styles.css) */
+
+/* Đầu khung nội dung */
+.main-head{width:100%;display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:6px 16px;margin-bottom:6px}
+.main-head .ftitle{margin-bottom:8px}
+.sync-note{font-size:12px;color:var(--muted)}
+
+/* Nút chung */
+.tool-btn{min-height:36px;padding:6px 14px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--pn-primary);
+  font-weight:700;font-size:13px;line-height:1.2;cursor:pointer;white-space:nowrap}
+.tool-btn:hover:not(:disabled){background:var(--pn-primary-soft)}
+.tool-btn:disabled{opacity:.55;cursor:wait}
+.tool-btn.primary{background:var(--pn-primary);border-color:var(--pn-primary);color:var(--paper)}
+.tool-btn.primary:hover:not(:disabled){background:var(--pn-primary-dark)}
+.tool-btn.danger{color:var(--pn-accent);border-color:currentColor}
+.tool-btn.danger:hover:not(:disabled){background:rgba(179,38,30,.08)}
+
+/* Thanh chọn tuần */
+.week-tools{width:100%;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+.week-step{display:flex;gap:6px;flex-wrap:wrap}
+.editor-only{display:none}
+.is-editor .editor-only{display:inline-flex;align-items:center}
+
+/* Nút bật biên tập trên thanh điều hướng */
+.pn-history-nav button.editor-toggle{width:auto;padding:0 12px;font-size:11px;font-weight:700;letter-spacing:.04em;margin-right:4px}
+.pn-history-nav button.editor-toggle.on{background:#fff;color:#17415f;border-color:#fff}
+
+.legend{align-self:flex-start;margin:8px 0 0;font-size:12px;color:var(--muted);line-height:1.5}
+
+/* Ô lịch ở chế độ biên tập */
+.week-table td{position:relative}
+.is-editor .week-table td{padding-bottom:30px}
+.add-slot{position:absolute;right:4px;bottom:4px;width:24px;height:24px;border-radius:50%;border:1px dashed var(--pn-primary);
+  background:var(--paper);color:var(--pn-primary);font-size:16px;font-weight:700;line-height:1;display:grid;place-items:center;cursor:pointer;
+  opacity:.55;padding:0}
+.week-table td:hover .add-slot,.add-slot:focus-visible{opacity:1}
+.add-slot:hover{background:var(--pn-primary);color:var(--paper);border-style:solid}
+.week-table td.fixed-date-cell .add-slot{border-color:#fff;background:transparent;color:#fff}
+.editable{cursor:pointer;transition:box-shadow .15s}
+.editable:hover,.editable:focus-visible{box-shadow:0 0 0 2px var(--pn-primary)}
+.week-table td.fixed-date-cell .editable:hover{box-shadow:0 0 0 2px #fff}
+
+/* Hộp thoại */
+.pn-dialog{width:min(560px,calc(100vw - 24px));max-height:calc(100dvh - 24px);border:1px solid var(--line);border-radius:14px;padding:0;
+  background:var(--paper);color:var(--ink);box-shadow:0 18px 48px rgba(16,30,50,.28)}
+.pn-dialog::backdrop{background:rgba(16,28,44,.45)}
+.pn-dialog form{padding:18px 20px 16px;display:grid;gap:12px}
+.pn-dialog h3{font-size:17px;font-weight:800;color:var(--pn-primary);letter-spacing:.01em;border-bottom:2px solid var(--pn-primary);padding-bottom:6px}
+.pn-dialog p{margin:0;font-size:13px;line-height:1.55}
+.pn-dialog a{color:var(--pn-primary);font-weight:700}
+.field{display:grid;gap:4px;font-size:13px;font-weight:700;color:var(--ink);min-width:0}
+.field .opt{font-weight:400;color:var(--muted);font-size:12px}
+.req{color:var(--pn-accent)}
+.field input,.field select,.field textarea,.field-inline input,.field-inline select{
+  width:100%;min-height:38px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);
+  font-size:14px;font-weight:400}
+.field textarea{resize:vertical;min-height:58px}
+.field input:focus,.field select:focus,.field textarea:focus,.field-inline input:focus,.field-inline select:focus{outline:2px solid var(--pn-primary);outline-offset:0;border-color:var(--pn-primary)}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.field-row[hidden],.field[hidden]{display:none}
+.field-short input{max-width:160px}
+.mode-set{border:1px solid var(--line);border-radius:8px;padding:8px 10px 10px;margin:0;display:flex;flex-wrap:wrap;gap:6px 16px}
+.mode-set legend{padding:0 4px;font-size:13px;font-weight:700}
+.mode-set label{display:flex;align-items:center;gap:6px;font-weight:400;font-size:14px;cursor:pointer}
+.mode-set input{width:16px;height:16px;accent-color:var(--pn-primary)}
+.form-error{color:var(--pn-accent);font-size:13px;min-height:0}
+.form-error:empty{display:none}
+.dialog-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding-top:4px}
+.dialog-actions .spacer{flex:1}
+
+/* Thông báo nổi */
+.toast{position:fixed;left:50%;bottom:max(18px,env(safe-area-inset-bottom));transform:translateX(-50%);z-index:50;
+  max-width:min(520px,calc(100vw - 24px));padding:10px 16px;border-radius:10px;background:#17415f;color:#fff;font-size:13px;line-height:1.5;
+  box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.toast.ok{background:#1f7a4d}
+.toast.error{background:#b3261e}
+.toast[hidden]{display:none}
+
+/* Thống kê */
+.stats-tools{width:100%;display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px 14px;margin-bottom:8px}
+.field-inline{display:grid;gap:4px;font-size:12px;font-weight:700;color:var(--muted)}
+.field-inline[hidden]{display:none}
+.field-inline input,.field-inline select{width:auto;min-width:140px}
+.stats-range{align-self:flex-start;margin:6px 0 10px;font-weight:700;color:var(--pn-primary);font-size:14px}
+.stats-table{width:100%;border-collapse:collapse;font-size:13px;background:var(--paper)}
+.stats-table th,.stats-table td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+.stats-table thead th{background:var(--pn-primary-soft);color:var(--ink);font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:.02em}
+.stats-table tbody th{font-weight:700;color:var(--ink)}
+.stats-table .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.stats-table .warn{color:var(--pn-accent);font-weight:700}
+.stats-table .nowrap{white-space:nowrap}
+.stats-table .strong{font-weight:700;color:var(--pn-primary)}
+.stats-table tr.zero{color:var(--muted)}
+.stats-table tr.zero th{color:var(--muted);font-weight:400}
+.stats-table tr.total th,.stats-table tr.total td{background:var(--pn-primary-soft);font-weight:800}
+.stats-table tr.editable:hover td{background:var(--pn-primary-soft)}
+.stats-table tr.editable:hover{box-shadow:none}
+#statsDetail{width:100%;margin-top:18px;display:grid;gap:18px}
+.stats-group-title{font-size:14px;font-weight:800;color:var(--pn-primary);margin:0 0 8px;letter-spacing:.01em}
+.stats-table.detail{min-width:640px}
+.empty-note{color:var(--muted);font-style:italic;font-size:13px}
+
+@media(max-width:820px){
+  .tool-btn{min-height:34px;padding:6px 10px;font-size:12px}
+  .is-editor .week-table td{padding-bottom:28px}
+  .field-row{grid-template-columns:1fr}
+  .pn-dialog form{padding:14px 14px 12px}
+  .stats-table{font-size:12px}
+  .stats-table th,.stats-table td{padding:6px 7px}
+  .pn-history-nav .pn-history-label{display:none}
+}
+.field .lbl{display:block}

@@ -7,8 +7,10 @@
   <meta name="description" content="Phúc Nguyên Work - Không gian quản lý lịch và công việc chuyên môn">
   <title>WORK'S CORNER | PHÚC NGUYÊN WORK</title>
   <link rel="icon" href="./pnl-logo.png">
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap">
-  <link rel="stylesheet" href="./styles.css?v=20261103p">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="./styles.css?v=20261103r">
+  <link rel="stylesheet" href="./work.css?v=20261103r">
 </head>
 <body>
   <div class="page">
@@ -17,49 +19,47 @@
       <div class="titles"><div class="kicker">Phúc Nguyên Work</div><h1>Work’s Corner</h1><div class="copy">Lịch công tác theo tuần</div></div>
     </div></header>
 
+    <nav class="schedule-nav" aria-label="Phân hệ công việc">
+      <div class="nav-list" id="navigation"></div>
+    </nav>
 
-
-
-      <nav class="schedule-nav" aria-label="Phân hệ công việc">
-
-        <div class="nav-list" id="navigation">
-        <button class="nav-item active" data-view="overview">LỊCH TỔNG</button>
-        <button class="nav-item" data-view="teaching">LỊCH GIẢNG</button>
-        <button class="nav-item" data-view="meetings">LỊCH HỌP</button>
-        <button class="nav-item" data-view="study">LỊCH HỌC</button>
-        <button class="nav-item" data-view="invigilation">COI THI</button>
-        <button class="nav-item" data-view="grading">CHẤM THI</button>
-        <button class="nav-item" data-view="research">NCKH</button>
-        <button class="nav-item" data-view="other">KHÁC</button>
-        <button class="nav-item" data-view="rmia">LỊCH R'MIA</button>
-        <a class="nav-item" href="./master.html">DANH SÁCH TỔNG</a>
-        
-        <a class="nav-item" href="./manage.html">QUẢN LÝ CÔNG VIỆC</a>
-        </div>
-      </nav>
-
-<div class="pn-history-nav" role="toolbar" aria-label="Điều hướng trang"><span class="pn-history-label">ĐIỀU HƯỚNG</span><span class="pn-history-spacer"></span><button type="button" data-history-back aria-label="Quay lại" title="Quay lại" disabled>‹</button><button type="button" data-history-forward aria-label="Tiến tới" title="Tiến tới" disabled>›</button></div>
+    <div class="pn-history-nav" role="toolbar" aria-label="Điều hướng trang">
+      <span class="pn-history-label">ĐIỀU HƯỚNG</span>
+      <span class="pn-history-spacer"></span>
+      <button type="button" class="editor-toggle" id="editorToggle" title="Chế độ biên tập">BIÊN TẬP</button>
+      <button type="button" data-history-back aria-label="Quay lại" title="Quay lại" disabled>‹</button>
+      <button type="button" data-history-forward aria-label="Tiến tới" title="Tiến tới" disabled>›</button>
+    </div>
 
     <div class="workspace workspace-single">
-
-
       <main class="frame main">
-        <h2 class="ftitle" id="sectionTitle">LỊCH GIẢNG</h2>
-
-        <div id="weekPanel" class="panel">
-        <div class="table-wrap">
-          <table class="week-table" aria-describedby="weekCaption">
-            <caption id="weekCaption" class="sr-only">Lịch theo tuần; ba hàng đầu là các ô sáng, chiều, tối; hàng cuối dành cho mốc công việc theo ngày.</caption>
-            <thead>
-              <tr>
-                <th class="dh">THỨ HAI</th><th class="dh">THỨ 3</th><th class="dh">THỨ 4</th><th class="dh">THỨ 5</th><th class="dh">THỨ 6</th><th class="dh">THỨ 7</th><th class="dh">CHỦ NHẬT</th>
-              </tr>
-            </thead>
-            <tbody id="weekBody"></tbody>
-          </table>
+        <div class="main-head">
+          <h2 class="ftitle" id="sectionTitle">LỊCH TỔNG</h2>
+          <div class="sync-note" id="syncNote" aria-live="polite"></div>
         </div>
 
-        <ul class="week-list" id="weekList" aria-label="Các tuần đã ban hành"></ul>
+        <div id="weekPanel" class="panel">
+          <div class="week-tools">
+            <div class="week-step">
+              <button type="button" class="tool-btn" id="prevWeek" aria-label="Tuần trước">‹ Tuần trước</button>
+              <button type="button" class="tool-btn" id="thisWeek">Tuần này</button>
+              <button type="button" class="tool-btn" id="nextWeek" aria-label="Tuần sau">Tuần sau ›</button>
+            </div>
+            <button type="button" class="tool-btn primary editor-only" id="addEvent">+ Thêm công việc</button>
+          </div>
+          <div class="table-wrap">
+            <table class="week-table" aria-describedby="weekCaption">
+              <caption id="weekCaption" class="sr-only">Lịch theo tuần; ba hàng đầu là các ô sáng, chiều, tối; hàng cuối dành cho mốc công việc theo ngày.</caption>
+              <thead>
+                <tr>
+                  <th class="dh">THỨ HAI</th><th class="dh">THỨ 3</th><th class="dh">THỨ 4</th><th class="dh">THỨ 5</th><th class="dh">THỨ 6</th><th class="dh">THỨ 7</th><th class="dh">CHỦ NHẬT</th>
+                </tr>
+              </thead>
+              <tbody id="weekBody"></tbody>
+            </table>
+          </div>
+          <p class="legend">Ba hàng đầu: sáng (trước 12h00), chiều (12h00–18h00), tối (từ 18h00). Hàng cuối: việc chốt hạn trong ngày.</p>
+          <ul class="week-list" id="weekList" aria-label="Các tuần có lịch"></ul>
         </div>
 
         <div id="ttPanel" class="panel" hidden>
@@ -68,14 +68,103 @@
           <div class="table-wrap"><table class="tt-table" id="ttTable"></table></div>
           <ul class="tt-notes" id="ttNotes"></ul>
         </div>
+
+        <div id="statsPanel" class="panel" hidden>
+          <div class="stats-tools">
+            <label class="field-inline"><span class="lbl">Kỳ thống kê</span><select id="statsMode">
+                <option value="month">Tháng</option>
+                <option value="quarter">Quý</option>
+                <option value="year">Năm</option>
+              </select>
+            </label>
+            <label class="field-inline" id="statsMonthWrap"><span class="lbl">Tháng</span><input type="month" id="statsMonth">
+            </label>
+            <label class="field-inline" id="statsQuarterWrap" hidden><span class="lbl">Quý</span><select id="statsQuarter">
+                <option value="1">Quý I</option><option value="2">Quý II</option>
+                <option value="3">Quý III</option><option value="4">Quý IV</option>
+              </select>
+            </label>
+            <label class="field-inline" id="statsYearWrap" hidden><span class="lbl">Năm</span><input type="number" id="statsYear" min="2020" max="2100" step="1">
+            </label>
+            <button type="button" class="tool-btn primary" id="exportExcel">Xuất Excel</button>
+          </div>
+          <p class="stats-range" id="statsRange"></p>
+          <div class="table-wrap"><table class="stats-table" id="statsSummary"></table></div>
+          <p class="legend">Số tiết quy đổi khoảng 1 giờ = 1 tiết, làm tròn đến tiết gần nhất; mục nào đã nhập “Số tiết” thì lấy theo số đã nhập. Mục “chưa đủ giờ” là mục thiếu giờ kết thúc hoặc không có giờ, cần bổ sung để tính tiết.</p>
+          <div id="statsDetail"></div>
+        </div>
       </main>
     </div>
   </div>
 
+  <!-- Biểu mẫu thêm, sửa công việc -->
+  <dialog class="pn-dialog" id="eventDialog" aria-labelledby="eventDialogTitle">
+    <form id="eventForm" method="dialog" novalidate>
+      <h3 id="eventDialogTitle">THÊM CÔNG VIỆC</h3>
+      <label class="field"><span class="lbl">Tên công việc <b class="req">*</b></span><input type="text" name="title" required autocomplete="off" placeholder="Ví dụ: LUẬT DÂN SỰ">
+      </label>
+      <div class="field-row">
+        <label class="field"><span class="lbl">Phân loại <b class="req">*</b></span><select name="category" id="categorySelect" required></select>
+        </label>
+        <label class="field"><span class="lbl">Ngày <b class="req">*</b></span><input type="date" name="date" required>
+        </label>
+      </div>
+      <label class="field" id="newCategoryWrap" hidden><span class="lbl">Tên loại mới</span><input type="text" name="newCategory" autocomplete="off" placeholder="Ví dụ: Công tác đảng">
+      </label>
+      <fieldset class="field mode-set">
+        <legend>Thời gian</legend>
+        <label><input type="radio" name="mode" value="time" checked> Theo giờ</label>
+        <label><input type="radio" name="mode" value="session"> Theo buổi</label>
+        <label><input type="radio" name="mode" value="allday"> Cả ngày</label>
+        <label><input type="radio" name="mode" value="deadline"> Hạn chót trong ngày</label>
+      </fieldset>
+      <div class="field-row" id="timeWrap">
+        <label class="field"><span class="lbl">Bắt đầu <b class="req">*</b></span><input type="time" name="start"></label>
+        <label class="field"><span class="lbl">Kết thúc</span><input type="time" name="end"></label>
+      </div>
+      <label class="field" id="sessionWrap" hidden><span class="lbl">Buổi</span><select name="session">
+          <option value="1">Sáng</option><option value="2">Chiều</option><option value="3">Tối</option>
+        </select>
+      </label>
+      <label class="field"><span class="lbl">Địa điểm <span class="opt">(không bắt buộc)</span></span><input type="text" name="location" autocomplete="off" placeholder="Ví dụ: Phòng 402 nhà A">
+      </label>
+      <label class="field"><span class="lbl">Thông tin khác <span class="opt">(mã lớp, người chủ trì, ghi chú; mỗi dòng hiển thị một dòng)</span></span><textarea name="info" rows="2"></textarea>
+      </label>
+      <label class="field field-short"><span class="lbl">Số tiết <span class="opt" id="lessonHint">(để trống: tự tính theo giờ)</span></span><input type="number" name="lessons" min="0" step="0.5" inputmode="decimal">
+      </label>
+      <p class="form-error" id="formError" role="alert"></p>
+      <div class="dialog-actions">
+        <button type="button" class="tool-btn danger" id="deleteEvent" hidden>Xóa</button>
+        <button type="button" class="tool-btn" id="duplicateEvent" hidden>Nhân bản</button>
+        <span class="spacer"></span>
+        <button type="button" class="tool-btn" data-close>Hủy</button>
+        <button type="submit" class="tool-btn primary" id="saveEvent">Lưu</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Bật chế độ biên tập -->
+  <dialog class="pn-dialog" id="tokenDialog" aria-labelledby="tokenDialogTitle">
+    <form id="tokenForm" method="dialog" novalidate>
+      <h3 id="tokenDialogTitle">CHẾ ĐỘ BIÊN TẬP</h3>
+      <p>Dán mã truy cập GitHub (fine-grained token) chỉ có quyền <b>Contents: Read and write</b> cho kho <b>Phuc-nguyen-work</b>. Mã chỉ lưu trên trình duyệt của máy này, không gửi đi đâu ngoài GitHub.</p>
+      <p><a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">Tạo mã truy cập mới trên GitHub ↗</a></p>
+      <label class="field"><span class="lbl">Mã truy cập</span><input type="password" name="token" autocomplete="off" spellcheck="false" placeholder="github_pat_…">
+      </label>
+      <p class="form-error" id="tokenError" role="alert"></p>
+      <div class="dialog-actions">
+        <span class="spacer"></span>
+        <button type="button" class="tool-btn" data-close>Hủy</button>
+        <button type="submit" class="tool-btn primary">Bật biên tập</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
   <script src="./history-nav.js?v=20261103b"></script>
-  <script src="./config.js"></script>
-  <script src="./data.js?v=20261103p"></script>
+  <script src="./config.js?v=20261103r"></script>
   <script src="./rmia.js?v=20261102g"></script>
-  <script src="./app.js?v=20261103p"></script>
+  <script src="./app.js?v=20261103r"></script>
 </body>
 </html>

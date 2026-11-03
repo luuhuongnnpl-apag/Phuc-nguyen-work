@@ -15,19 +15,13 @@ jobs:
         run: |
           test -s README.md
           test -s apps/web/index.html
-          test -s apps/web/manage.html
-          test -s apps/web/manage.js
-          test -s apps/web/planner.html
-          test -s apps/web/planner.css
-          test -s apps/web/planner.js
-          test -s apps/api/src/index.js
-          test -s database/migrations/0001_initial_schema.sql
-          test -s database/migrations/0002_schedules_reminders.sql
-          test -s database/migrations/0003_seed_work_categories.sql
-      - name: Validate JavaScript syntax
+          test -s apps/web/app.js
+          test -s apps/web/work.css
+          test -s apps/web/data/events.json
+      - name: Validate JavaScript and data
         run: |
-          node --check apps/web/data.js
           node --check apps/web/app.js
-          node --check apps/web/manage.js
-          node --check apps/web/planner.js
-          node --check apps/api/src/index.js
+          node --check apps/web/config.js
+          node --check apps/web/rmia.js
+          node --check apps/web/history-nav.js
+          node -e "const d=JSON.parse(require('fs').readFileSync('apps/web/data/events.json','utf8'));const ids=new Set();for(const e of d.events){if(!e.id||!e.title||!/^\d{4}-\d{2}-\d{2}$/.test(e.date))throw new Error('Mục lỗi: '+JSON.stringify(e));if(ids.has(e.id))throw new Error('Trùng id: '+e.id);ids.add(e.id)}console.log(d.events.length+' mục hợp lệ')"
