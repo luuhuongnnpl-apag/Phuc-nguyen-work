@@ -53,6 +53,18 @@
     return 0;
   }
 
+  function isPastEvent(week, day, row) {
+    if (!week) return false;
+    var eventDate = parse(week.from);
+    eventDate.setDate(eventDate.getDate() + day - 1);
+    var now = new Date();
+    var today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    if (eventDate < today) return true;
+    if (eventDate > today) return false;
+    var endHour = row === 1 ? 12 : (row === 2 ? 17 : 24);
+    return now.getHours() >= endHour;
+  }
+
   function todayColumn(week) {
     if (!week) return -1;
     var now = new Date(); now.setHours(0, 0, 0, 0);
@@ -90,9 +102,11 @@
         if (d === tcol) td.classList.add("today-col");
         items.filter(function (it) { return it.day === d && it.row === r; }).forEach(function (it) {
           td.classList.add("filled");
+          var entry = el("div", "schedule-entry" + (isPastEvent(week, it.day, it.row) ? " is-completed" : ""));
           (it.lines || []).forEach(function (line, i) {
-            td.appendChild(el("div", i === 0 ? "first" : "", line));
+            entry.appendChild(el("div", i === 0 ? "first" : "", line));
           });
+          td.appendChild(entry);
         });
         tr.appendChild(td);
       }
@@ -133,7 +147,7 @@
       events.sort(function (x, y) { return x.row - y.row; });
       if (day === todayColumn(week)) td.classList.add("today-col");
       events.forEach(function (event) {
-        var card = el("div", "overview-event");
+        var card = el("div", "overview-event" + (isPastEvent(week, day, event.row) ? " is-completed" : ""));
         card.appendChild(el("div", "overview-category", categoryNames[event.type]));
         (event.lines || []).forEach(function (line, i) {
           card.appendChild(el("div", i === 0 ? "first" : "overview-detail", line));
