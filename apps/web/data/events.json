@@ -35,7 +35,8 @@
     {
       "id": "other",
       "name": "Công việc khác",
-      "tab": "KHÁC"
+      "tab": "KHÁC",
+      "color": "#b3261e"
     }
   ],
   "events": [

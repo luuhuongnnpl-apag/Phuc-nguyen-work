@@ -58,6 +58,7 @@
   function categories() { return store.categories || []; }
   function catById(id) { return categories().filter(function (c) { return c.id === id; })[0]; }
   function catName(id) { var c = catById(id); return c ? c.name : "Khác"; }
+  function catColor(id) { var c = catById(id); return c && /^#[0-9a-fA-F]{3,8}$/.test(c.color || "") ? c.color : ""; }
   function catTab(id) { var c = catById(id); return c ? (c.tab || c.name.toUpperCase()) : "KHÁC"; }
   function slug(s) {
     return String(s).normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D")
@@ -217,7 +218,12 @@
           for (var k = r + 1; k < r + lay.spans[r]; k++) covered[d + "-" + k] = true;
         }
         if (items.length) td.classList.add("filled");
-        if (r === 4 && items.length) td.classList.add("fixed-date-cell");
+        if (r === 4 && items.length) {
+          td.classList.add("fixed-date-cell");
+          // Ô hạn chót chỉ gồm việc thuộc một phân loại có màu riêng thì tô theo màu đó
+          var cols = items.map(function (it) { return catColor(it.ev.category); });
+          if (cols[0] && cols.every(function (c) { return c === cols[0]; })) { td.classList.add("cat-colored"); td.style.setProperty("--cat", cols[0]); }
+        }
         items.forEach(function (it) { td.appendChild(cardOf(it.ev, overview, r === 4)); });
         if (!items.length && overview) td.appendChild(el("div", "overview-empty", "—"));
         if (token) td.appendChild(addSlotButton(dayISO, r));
@@ -238,6 +244,8 @@
       card = el("div", "schedule-entry" + (deadline ? " fixed-date-entry" : ""));
       linesOf(ev).forEach(function (l, i) { card.appendChild(el("div", i === 0 ? "first" : "", l)); });
     }
+    var color = catColor(ev.category);
+    if (color) { card.classList.add("cat-colored"); card.style.setProperty("--cat", color); }
     if (token) {
       card.classList.add("editable");
       card.tabIndex = 0;

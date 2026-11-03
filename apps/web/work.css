@@ -110,3 +110,17 @@
   .pn-history-nav .pn-history-label{display:none}
 }
 .field .lbl{display:block}
+
+/* Phân loại có màu riêng (thuộc tính color trong data/events.json, ví dụ Công việc khác màu đỏ) */
+.week-table .schedule-entry.cat-colored,
+.week-table .overview-event.cat-colored{border-left-color:var(--cat);background:color-mix(in srgb,var(--cat) 10%,var(--paper))}
+.week-table .schedule-entry.cat-colored .first,
+.week-table .overview-event.cat-colored .first,
+.week-table .overview-event.cat-colored .overview-category{color:var(--cat)}
+.week-table td.fixed-date-cell.cat-colored{background:var(--cat)!important}
+.week-table td.fixed-date-cell .cat-colored{background:transparent;border-color:rgba(255,255,255,.55);border-left-color:#fff}
+.week-table td.fixed-date-cell .cat-colored .first,
+.week-table td.fixed-date-cell .cat-colored .overview-category,
+.week-table td.fixed-date-cell .cat-colored .overview-detail{color:#fff}
+.week-table td.fixed-date-cell:not(.cat-colored) .cat-colored{background:var(--cat)}
+.stats-table tbody th .cat-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;background:var(--cat)}
