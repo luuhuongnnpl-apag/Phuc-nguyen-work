@@ -118,6 +118,7 @@
         cellItems.forEach(function (it) {
           if (isPastEvent(week, it.day, it.row, it.lines)) return;
           td.classList.add("filled");
+          if (r === 4 || it.fixedDate) td.classList.add("fixed-date-cell");
           if (it.span > 1) {
             td.rowSpan = it.span;
             spanUntil[d] = r + it.span - 1;
@@ -171,6 +172,7 @@
           });
         });
         if (day === todayColumn(week)) td.classList.add("today-col");
+        if (events.some(function (event) { return event.fixedDate || session === 4; })) td.classList.add("fixed-date-cell");
         if (events.length === 1 && events[0].span > 1) {
           td.rowSpan = events[0].span;
           spanUntil[day] = session + events[0].span - 1;
