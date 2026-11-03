@@ -157,3 +157,9 @@ h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0}
  .week-table td .overview-event .first{font-size:9px}
  .week-table td .overview-detail{font-size:8.5px}
 }
+
+
+/* Làm mờ lịch đã hoàn thành, không xóa dữ liệu hoặc ẩn nội dung */
+.schedule-entry.is-completed,.overview-event.is-completed{opacity:.38;filter:grayscale(.7)}
+.schedule-entry.is-completed .first,.overview-event.is-completed .first{text-decoration:line-through;text-decoration-thickness:1px}
+.schedule-entry{margin:2px 0}
