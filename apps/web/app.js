@@ -610,6 +610,21 @@
     for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
     return new TextDecoder().decode(bytes);
   }
+  var NO_WRITE_MSG = "Mã truy cập mới có quyền đọc, chưa có quyền ghi. Hãy tạo lại mã: Repository access chọn “Only select repositories” → Phuc-nguyen-work; Permissions → Repository permissions → Contents chọn “Read and write”.";
+
+  // Thử quyền ghi mà không đổi dữ liệu: gửi lệnh ghi với mã phiên bản (sha) cố ý sai.
+  // Có quyền ghi → GitHub báo xung đột (409/422); không có quyền → 403/404.
+  function probeWrite(tk) {
+    var body = JSON.stringify({ message: "kiểm tra quyền ghi", content: "", sha: "0000000000000000000000000000000000000000", branch: GH.branch });
+    return ghFetch("/contents/" + GH.dataPath, { method: "PUT", body: body }, tk).then(function (res) {
+      if (res.status === 409 || res.status === 422) return true;
+      if (res.status === 401) throw new Error("Mã truy cập không hợp lệ hoặc đã hết hạn.");
+      if (res.status === 403 || res.status === 404) throw new Error(NO_WRITE_MSG);
+      if (res.ok) return true;
+      throw new Error("Không kiểm tra được quyền ghi (mã lỗi " + res.status + ").");
+    });
+  }
+
   function apiUrl(path) { return "https://api.github.com/repos/" + GH.owner + "/" + GH.repo + path; }
   function ghFetch(path, opt, tk) {
     opt = opt || {};
@@ -619,7 +634,7 @@
   }
   function ghError(res, fallback) {
     if (res.status === 401) return "Mã truy cập không hợp lệ hoặc đã hết hạn. Hãy bật lại chế độ biên tập với mã mới.";
-    if (res.status === 403 || res.status === 404) return "Mã truy cập chưa có quyền ghi vào kho Phuc-nguyen-work (cần Contents: Read and write).";
+    if (res.status === 403 || res.status === 404) return NO_WRITE_MSG;
     return fallback + " (mã lỗi " + res.status + ").";
   }
   function readRemote() {
@@ -855,7 +870,9 @@
       if (!res.ok) throw new Error(ghError(res, "Không kiểm tra được mã truy cập"));
       return res.json();
     }).then(function (repo) {
-      if (repo.permissions && repo.permissions.push === false) throw new Error("Mã truy cập này chỉ có quyền đọc. Cần quyền Contents: Read and write.");
+      if (repo.permissions && repo.permissions.push === false) throw new Error(NO_WRITE_MSG);
+      return probeWrite(tk);
+    }).then(function () {
       token = tk; saveToken(tk);
       $("#tokenDialog").close();
       updateEditorToggle();
@@ -871,8 +888,11 @@
     }).then(function (d) { store = normalize(d); });
   }
   function loadFromGitHub() {
-    return readRemote().then(function (cur) { store = cur.data; sha = cur.sha; render(); })
-      .catch(function (x) { toast(x.message || "Không đọc được dữ liệu từ GitHub.", "error"); });
+    return readRemote().then(function (cur) { store = cur.data; sha = cur.sha; render(); return probeWrite(token); })
+      .catch(function (x) {
+        if (x.message === NO_WRITE_MSG || /không hợp lệ/.test(x.message || "")) { token = null; saveToken(null); updateEditorToggle(); render(); }
+        toast(x.message || "Không đọc được dữ liệu từ GitHub.", "error");
+      });
   }
 
   initStatsControls();
