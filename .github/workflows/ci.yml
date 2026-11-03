@@ -26,6 +26,7 @@ jobs:
           test -s database/migrations/0003_seed_work_categories.sql
       - name: Validate JavaScript syntax
         run: |
+          node --check apps/web/data.js
           node --check apps/web/app.js
           node --check apps/web/manage.js
           node --check apps/web/planner.js
