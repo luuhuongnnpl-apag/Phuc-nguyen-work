@@ -105,10 +105,12 @@
     var items = week ? week.items || [] : [];
     var rows = MIN_ROWS;
     items.forEach(function (it) { if (it.row > rows) rows = it.row; });
+    var sessionNames = ["SÁNG", "TRƯA – CHIỀU", "TỐI"];
     var tcol = todayColumn(week);
 
     for (var r = 1; r <= rows; r++) {
-      var tr = el("tr");
+      var tr = el("tr", "session-row session-row-" + r);
+      tr.appendChild(el("th", "session-label", sessionNames[r - 1] || ("BUỔI " + r)));
       for (var d = 1; d <= 7; d++) {
         var td = el("td");
         if (d === tcol) td.classList.add("today-col");
@@ -129,7 +131,7 @@
     if (!week) {
       var n = el("tr", "notice");
       var c = el("td", "", "Chưa có lịch được ban hành.");
-      c.colSpan = 7; n.appendChild(c); body.appendChild(n);
+      c.colSpan = 8; n.appendChild(c); body.appendChild(n);
     }
   }
 
@@ -140,39 +142,43 @@
     if (!week) {
       var empty = el("tr", "notice");
       var msg = el("td", "", "Chưa có lịch được ban hành.");
-      msg.colSpan = 7; empty.appendChild(msg); body.appendChild(empty);
+      msg.colSpan = 8; empty.appendChild(msg); body.appendChild(empty);
       return;
     }
-    var tr = el("tr", "overview-row");
     var categoryNames = TITLES;
-    for (var day = 1; day <= 7; day++) {
-      var td = el("td", "overview-day");
-      var events = [];
-      Object.keys(categoryNames).forEach(function (type) {
-        if (type === "overview" || type === "rmia") return;
-        (DATA[type] || []).forEach(function (w) {
-          if (w.from !== week.from || w.to !== week.to) return;
-          (w.items || []).forEach(function (item) {
-            if (item.day === day && !isPastEvent(week, day, Number(item.row || 1), item.lines)) {
-              events.push({ row: Number(item.row || 1), type: type, lines: item.lines || [] });
-            }
+    var sessionNames = ["SÁNG", "TRƯA – CHIỀU", "TỐI"];
+    for (var session = 1; session <= 3; session++) {
+      var tr = el("tr", "overview-row session-row session-row-" + session);
+      tr.appendChild(el("th", "session-label", sessionNames[session - 1]));
+      for (var day = 1; day <= 7; day++) {
+        var td = el("td", "overview-day");
+        var events = [];
+        Object.keys(categoryNames).forEach(function (type) {
+          if (type === "overview" || type === "rmia") return;
+          (DATA[type] || []).forEach(function (w) {
+            if (w.from !== week.from || w.to !== week.to) return;
+            (w.items || []).forEach(function (item) {
+              if (item.day === day && Number(item.row || 1) === session &&
+                  !isPastEvent(week, day, session, item.lines)) {
+                events.push({ type: type, lines: item.lines || [] });
+              }
+            });
           });
         });
-      });
-      events.sort(function (x, y) { return x.row - y.row; });
-      if (day === todayColumn(week)) td.classList.add("today-col");
-      events.forEach(function (event) {
-        var card = el("div", "overview-event");
-        card.appendChild(el("div", "overview-category", categoryNames[event.type]));
-        (event.lines || []).forEach(function (line, i) {
-          card.appendChild(el("div", i === 0 ? "first" : "overview-detail", line));
+        if (day === todayColumn(week)) td.classList.add("today-col");
+        events.forEach(function (event) {
+          var card = el("div", "overview-event");
+          card.appendChild(el("div", "overview-category", categoryNames[event.type]));
+          (event.lines || []).forEach(function (line, i) {
+            card.appendChild(el("div", i === 0 ? "first" : "overview-detail", line));
+          });
+          td.appendChild(card);
         });
-        td.appendChild(card);
-      });
-      if (!events.length) td.appendChild(el("div", "overview-empty", "—"));
-      tr.appendChild(td);
+        if (!events.length) td.appendChild(el("div", "overview-empty", "—"));
+        tr.appendChild(td);
+      }
+      body.appendChild(tr);
     }
-    body.appendChild(tr);
   }
 
   function pushWorkHistory() {
