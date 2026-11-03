@@ -326,3 +326,12 @@ body{font-family:var(--f-body);background:var(--bg);color:var(--ink)}
 
 /* Enforce the PNL typeface consistently, including components with legacy font shorthands. */
 body,body *{font-family:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",sans-serif!important}
+
+/* A date-only deadline highlights the complete calendar cell in the banner blue. */
+.week-table td.fixed-date-cell{background:var(--pn-primary)!important;color:#fff!important}
+.week-table td.fixed-date-cell .schedule-entry,
+.week-table td.fixed-date-cell .overview-event{background:transparent;border-color:rgba(255,255,255,.55);border-left-color:#fff;color:#fff}
+.week-table td.fixed-date-cell .schedule-entry .first,
+.week-table td.fixed-date-cell .overview-event .first,
+.week-table td.fixed-date-cell .overview-category,
+.week-table td.fixed-date-cell .overview-detail{color:#fff}
