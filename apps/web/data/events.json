@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated": "2026-11-03T14:38:41.482Z",
+  "updated": "2026-11-03T14:39:12.746Z",
   "categories": [
     {
       "id": "teaching",
@@ -157,6 +157,15 @@
       "mode": "deadline",
       "info": "",
       "location": ""
+    },
+    {
+      "id": "emw0sn3r7fv1r",
+      "title": "Quà 45n",
+      "category": "other",
+      "date": "2026-11-08",
+      "mode": "deadline",
+      "location": "",
+      "info": "In bình bổ sung"
     }
   ]
 }
