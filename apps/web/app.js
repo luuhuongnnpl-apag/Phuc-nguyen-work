@@ -53,28 +53,14 @@
     return 0;
   }
 
-  function isPastEvent(week, day, row, lines) {
+  // Chỉ làm mờ ngày đã qua; không loại bỏ sự kiện lịch khỏi giao diện.
+  function isPastDate(week, day) {
     if (!week) return false;
     var eventDate = parse(week.from);
     eventDate.setDate(eventDate.getDate() + day - 1);
     var now = new Date();
     var today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    if (eventDate < today) return true;
-    if (eventDate > today) return false;
-
-    // Ưu tiên giờ kết thúc ghi trong nội dung lịch; nếu chỉ có một mốc giờ,
-    // coi đó là thời điểm công việc diễn ra. Lịch không ghi giờ dùng mốc cuối buổi.
-    var timeMatches = [];
-    (lines || []).forEach(function (line) {
-      var re = /(\d{1,2})\s*(?:h|:)\s*(\d{2})?/gi, match;
-      while ((match = re.exec(line)) !== null) {
-        var hour = Number(match[1]), minute = Number(match[2] || 0);
-        if (hour <= 24 && minute <= 59) timeMatches.push(hour * 60 + minute);
-      }
-    });
-    var endMinutes = timeMatches.length ? timeMatches[timeMatches.length - 1]
-      : (row === 1 ? 12 * 60 : (row === 2 ? 17 * 60 : 24 * 60));
-    return now.getHours() * 60 + now.getMinutes() >= endMinutes;
+    return eventDate < today;
   }
 
   function todayColumn(week) {
@@ -94,6 +80,8 @@
         var d = parse(week.from); d.setDate(d.getDate() + i);
         var s = String(d.getDate()).padStart(2, "0") + "/" + String(d.getMonth() + 1).padStart(2, "0") + "/" + d.getFullYear();
         th.appendChild(el("div", "ddate", "(" + s + ")"));
+        var today = new Date(); today.setHours(0, 0, 0, 0);
+        if (d < today) th.classList.add("past-date-head");
       }
     });
   }
@@ -114,9 +102,9 @@
         if (spanUntil[d] >= r) continue;
         var td = el("td");
         if (d === tcol) td.classList.add("today-col");
+        if (isPastDate(week, d)) td.classList.add("past-date-cell");
         var cellItems = items.filter(function (it) { return it.day === d && it.row === r; });
         cellItems.forEach(function (it) {
-          if (isPastEvent(week, it.day, it.row, it.lines)) return;
           td.classList.add("filled");
           if (r === 4 || it.fixedDate) td.classList.add("fixed-date-cell");
           if (it.span > 1) {
@@ -164,14 +152,14 @@
           (DATA[type] || []).forEach(function (w) {
             if (w.from !== week.from || w.to !== week.to) return;
             (w.items || []).forEach(function (item) {
-              if (item.day === day && Number(item.row || 1) === session &&
-                  !isPastEvent(week, day, session, item.lines)) {
+              if (item.day === day && Number(item.row || 1) === session) {
                 events.push({ type: type, lines: item.lines || [], span: Number(item.span || 1), fixedDate: !!item.fixedDate });
               }
             });
           });
         });
         if (day === todayColumn(week)) td.classList.add("today-col");
+        if (isPastDate(week, day)) td.classList.add("past-date-cell");
         if (events.some(function (event) { return event.fixedDate || session === 4; })) td.classList.add("fixed-date-cell");
         if (events.length === 1 && events[0].span > 1) {
           td.rowSpan = events[0].span;

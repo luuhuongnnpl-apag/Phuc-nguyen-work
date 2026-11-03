@@ -335,3 +335,8 @@ body,body *{font-family:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",sans
 .week-table td.fixed-date-cell .overview-event .first,
 .week-table td.fixed-date-cell .overview-category,
 .week-table td.fixed-date-cell .overview-detail{color:#fff}
+
+
+/* Ngày đã qua vẫn hiển thị đầy đủ lịch, chỉ giảm độ nổi bật của cả cột ngày. */
+.week-table th.past-date-head{opacity:.58}
+.week-table td.past-date-cell{opacity:.48}
