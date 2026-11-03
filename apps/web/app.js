@@ -53,7 +53,7 @@
     return 0;
   }
 
-  function isPastEvent(week, day, row) {
+  function isPastEvent(week, day, row, lines) {
     if (!week) return false;
     var eventDate = parse(week.from);
     eventDate.setDate(eventDate.getDate() + day - 1);
@@ -61,8 +61,20 @@
     var today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     if (eventDate < today) return true;
     if (eventDate > today) return false;
-    var endHour = row === 1 ? 12 : (row === 2 ? 17 : 24);
-    return now.getHours() >= endHour;
+
+    // Ưu tiên giờ kết thúc ghi trong nội dung lịch; nếu chỉ có một mốc giờ,
+    // coi đó là thời điểm công việc diễn ra. Lịch không ghi giờ dùng mốc cuối buổi.
+    var timeMatches = [];
+    (lines || []).forEach(function (line) {
+      var re = /(\d{1,2})\s*(?:h|:)\s*(\d{2})?/gi, match;
+      while ((match = re.exec(line)) !== null) {
+        var hour = Number(match[1]), minute = Number(match[2] || 0);
+        if (hour <= 24 && minute <= 59) timeMatches.push(hour * 60 + minute);
+      }
+    });
+    var endMinutes = timeMatches.length ? timeMatches[timeMatches.length - 1]
+      : (row === 1 ? 12 * 60 : (row === 2 ? 17 * 60 : 24 * 60));
+    return now.getHours() * 60 + now.getMinutes() >= endMinutes;
   }
 
   function todayColumn(week) {
@@ -101,8 +113,9 @@
         var td = el("td");
         if (d === tcol) td.classList.add("today-col");
         items.filter(function (it) { return it.day === d && it.row === r; }).forEach(function (it) {
+          if (isPastEvent(week, it.day, it.row, it.lines)) return;
           td.classList.add("filled");
-          var entry = el("div", "schedule-entry" + (isPastEvent(week, it.day, it.row) ? " is-completed" : ""));
+          var entry = el("div", "schedule-entry");
           (it.lines || []).forEach(function (line, i) {
             entry.appendChild(el("div", i === 0 ? "first" : "", line));
           });
@@ -140,14 +153,16 @@
         (DATA[type] || []).forEach(function (w) {
           if (w.from !== week.from || w.to !== week.to) return;
           (w.items || []).forEach(function (item) {
-            if (item.day === day) events.push({ row: Number(item.row || 1), type: type, lines: item.lines || [] });
+            if (item.day === day && !isPastEvent(week, day, Number(item.row || 1), item.lines)) {
+              events.push({ row: Number(item.row || 1), type: type, lines: item.lines || [] });
+            }
           });
         });
       });
       events.sort(function (x, y) { return x.row - y.row; });
       if (day === todayColumn(week)) td.classList.add("today-col");
       events.forEach(function (event) {
-        var card = el("div", "overview-event" + (isPastEvent(week, day, event.row) ? " is-completed" : ""));
+        var card = el("div", "overview-event");
         card.appendChild(el("div", "overview-category", categoryNames[event.type]));
         (event.lines || []).forEach(function (line, i) {
           card.appendChild(el("div", i === 0 ? "first" : "overview-detail", line));
@@ -295,6 +310,14 @@
       return;
     }
     activate(location.hash.slice(1) || "overview", "none");
+  });
+
+  // Tự cập nhật theo đồng hồ thiết bị, không cần tải lại trang.
+  window.setInterval(function () {
+    if (state.view !== "rmia" && !document.hidden) render();
+  }, 15000);
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden && state.view !== "rmia") render();
   });
 
   // Khi API được cấu hình và người dùng đã đăng nhập, lịch lưu trên D1
