@@ -12,7 +12,7 @@
     other: "KHÁC",
     rmia: "LỊCH R'MIA"
   };
-  var MIN_ROWS = 3;
+  var MIN_ROWS = 4;
   var DATA = window.PNW_DATA || {};
 
   var $ = function (s) { return document.querySelector(s); };
@@ -105,19 +105,24 @@
     var items = week ? week.items || [] : [];
     var rows = MIN_ROWS;
     items.forEach(function (it) { if (it.row > rows) rows = it.row; });
-    var sessionNames = ["SÁNG", "TRƯA – CHIỀU", "TỐI"];
     var tcol = todayColumn(week);
+    var spanUntil = {};
 
     for (var r = 1; r <= rows; r++) {
-      var tr = el("tr", "session-row session-row-" + r);
-      tr.appendChild(el("th", "session-label", sessionNames[r - 1] || ("BUỔI " + r)));
+      var tr = el("tr", "time-slot-row time-slot-row-" + r + (r === 4 ? " deadline-row" : ""));
       for (var d = 1; d <= 7; d++) {
+        if (spanUntil[d] >= r) continue;
         var td = el("td");
         if (d === tcol) td.classList.add("today-col");
-        items.filter(function (it) { return it.day === d && it.row === r; }).forEach(function (it) {
+        var cellItems = items.filter(function (it) { return it.day === d && it.row === r; });
+        cellItems.forEach(function (it) {
           if (isPastEvent(week, it.day, it.row, it.lines)) return;
           td.classList.add("filled");
-          var entry = el("div", "schedule-entry");
+          if (it.span > 1) {
+            td.rowSpan = it.span;
+            spanUntil[d] = r + it.span - 1;
+          }
+          var entry = el("div", "schedule-entry" + (r === 4 || it.fixedDate ? " fixed-date-entry" : ""));
           (it.lines || []).forEach(function (line, i) {
             entry.appendChild(el("div", i === 0 ? "first" : "", line));
           });
@@ -131,7 +136,7 @@
     if (!week) {
       var n = el("tr", "notice");
       var c = el("td", "", "Chưa có lịch được ban hành.");
-      c.colSpan = 8; n.appendChild(c); body.appendChild(n);
+      c.colSpan = 7; n.appendChild(c); body.appendChild(n);
     }
   }
 
@@ -142,15 +147,15 @@
     if (!week) {
       var empty = el("tr", "notice");
       var msg = el("td", "", "Chưa có lịch được ban hành.");
-      msg.colSpan = 8; empty.appendChild(msg); body.appendChild(empty);
+      msg.colSpan = 7; empty.appendChild(msg); body.appendChild(empty);
       return;
     }
     var categoryNames = TITLES;
-    var sessionNames = ["SÁNG", "TRƯA – CHIỀU", "TỐI"];
-    for (var session = 1; session <= 3; session++) {
-      var tr = el("tr", "overview-row session-row session-row-" + session);
-      tr.appendChild(el("th", "session-label", sessionNames[session - 1]));
+    var spanUntil = {};
+    for (var session = 1; session <= 4; session++) {
+      var tr = el("tr", "overview-row time-slot-row time-slot-row-" + session + (session === 4 ? " deadline-row" : ""));
       for (var day = 1; day <= 7; day++) {
+        if (spanUntil[day] >= session) continue;
         var td = el("td", "overview-day");
         var events = [];
         Object.keys(categoryNames).forEach(function (type) {
@@ -160,14 +165,18 @@
             (w.items || []).forEach(function (item) {
               if (item.day === day && Number(item.row || 1) === session &&
                   !isPastEvent(week, day, session, item.lines)) {
-                events.push({ type: type, lines: item.lines || [] });
+                events.push({ type: type, lines: item.lines || [], span: Number(item.span || 1), fixedDate: !!item.fixedDate });
               }
             });
           });
         });
         if (day === todayColumn(week)) td.classList.add("today-col");
+        if (events.length === 1 && events[0].span > 1) {
+          td.rowSpan = events[0].span;
+          spanUntil[day] = session + events[0].span - 1;
+        }
         events.forEach(function (event) {
-          var card = el("div", "overview-event");
+          var card = el("div", "overview-event" + (session === 4 || event.fixedDate ? " fixed-date-event" : ""));
           card.appendChild(el("div", "overview-category", categoryNames[event.type]));
           (event.lines || []).forEach(function (line, i) {
             card.appendChild(el("div", i === 0 ? "first" : "overview-detail", line));
