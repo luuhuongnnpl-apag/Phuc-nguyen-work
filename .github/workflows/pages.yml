@@ -19,7 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Validate web entry point
-        run: test -s apps/web/index.html && test -s apps/web/app.js && test -s apps/web/styles.css && test -s apps/web/manage.html && test -s apps/web/manage.js && test -s apps/web/manage.css
+        run: test -s apps/web/index.html && test -s apps/web/app.js && test -s apps/web/styles.css && test -s apps/web/manage.html && test -s apps/web/manage.js && test -s apps/web/manage.css && test -s apps/web/planner.html && test -s apps/web/planner.css && test -s apps/web/planner.js
       - uses: actions/upload-pages-artifact@v3
         with:
           path: apps/web

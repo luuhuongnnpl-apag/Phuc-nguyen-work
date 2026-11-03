@@ -17,6 +17,9 @@ jobs:
           test -s apps/web/index.html
           test -s apps/web/manage.html
           test -s apps/web/manage.js
+          test -s apps/web/planner.html
+          test -s apps/web/planner.css
+          test -s apps/web/planner.js
           test -s apps/api/src/index.js
           test -s database/migrations/0001_initial_schema.sql
           test -s database/migrations/0002_schedules_reminders.sql
@@ -25,4 +28,5 @@ jobs:
         run: |
           node --check apps/web/app.js
           node --check apps/web/manage.js
+          node --check apps/web/planner.js
           node --check apps/api/src/index.js
