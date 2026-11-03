@@ -41,7 +41,10 @@ window.PNW_DATA = {
       items: [
         { day: 1, row: 1, lines: ["KIỂM SOÁT QUYỀN LỰC NHÀ NƯỚC", "Thầy Thái", "8h30 - 11h00"] },
         { day: 1, row: 2, lines: ["KIỂM SOÁT QUYỀN LỰC NHÀ NƯỚC", "Thầy Thái", "14h00 - 17h00"] },
-        { day: 2, row: 1, lines: ["KIỂM SOÁT QUYỀN LỰC NHÀ NƯỚC", "Thầy Thái", "8h30 - 11h00"] }
+        { day: 2, row: 1, lines: ["KIỂM SOÁT QUYỀN LỰC NHÀ NƯỚC", "Thầy Thái", "8h30 - 11h00"] },
+        { day: 2, row: 2, lines: ["KIỂM SOÁT QUYỀN LỰC NHÀ NƯỚC", "Thầy Thái", "14h00 - 17h00"] },
+        { day: 3, row: 1, lines: ["TỔ CHỨC THỰC HIỆN QUYỀN HÀNH PHÁP", "TS. Lê Thị Hoa", "8h00 - 11h00"] },
+        { day: 4, row: 2, lines: ["NÓI CHUYỆN CHUYÊN ĐỀ KHOA LUẬT", "Thầy Thái, Thầy Vinh", "14h00 - 17h00", "Phòng truyền thống"] }
       ]
     }
   ],
