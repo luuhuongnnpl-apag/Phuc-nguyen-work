@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated": "2026-11-04T01:47:26.645Z",
+  "updated": "2026-11-04T01:47:39.081Z",
   "categories": [
     {
       "id": "teaching",
@@ -49,17 +49,6 @@
       "start": "20:00",
       "end": "",
       "info": "2505LHOD",
-      "location": ""
-    },
-    {
-      "id": "e20261105a",
-      "title": "LUẬT ĐẤT ĐAI",
-      "category": "teaching",
-      "date": "2026-11-05",
-      "mode": "time",
-      "start": "20:00",
-      "end": "",
-      "info": "2405LHOA",
       "location": ""
     },
     {
