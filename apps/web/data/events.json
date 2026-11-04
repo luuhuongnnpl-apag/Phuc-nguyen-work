@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated": "2026-11-03T14:41:57.258Z",
+  "updated": "2026-11-04T01:44:34.813Z",
   "categories": [
     {
       "id": "teaching",
@@ -176,6 +176,17 @@
       "mode": "deadline",
       "location": "",
       "info": "Ngày thi 01/12/2026"
+    },
+    {
+      "id": "emw1gere43kfd",
+      "title": "Thực tế HĐ đề cương NCS",
+      "category": "study",
+      "date": "2026-11-04",
+      "mode": "time",
+      "location": "",
+      "info": "",
+      "start": "08:30",
+      "end": ""
     }
   ]
 }
