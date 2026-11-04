@@ -1,7 +1,7 @@
 /*
   PHÚC NGUYÊN WORK — LỊCH CÔNG TÁC
   ---------------------------------------------------------------
-  Nguồn dữ liệu duy nhất: data/events.json (categories + events).
+  Nguồn dữ liệu: Firestore (bản cũ data/events.json chỉ để chuyển đổi/dự phòng).
   - Lịch tổng hiển thị mọi công việc; mỗi lịch con là bộ lọc theo phân loại.
   - Thống kê đọc cùng nguồn đó, quy đổi số tiết theo thời lượng.
   - Chế độ biên tập: lưu trực tiếp vào kho GitHub qua Contents API bằng
@@ -18,7 +18,6 @@
   var CFG = window.PNW_CONFIG || {};
   var GH = CFG.github || {};
   var MIN_PER_LESSON = Number(CFG.minutesPerLesson) || 60;
-  var TOKEN_KEY = "pnw_github_token";
   var RMIA = window.PNW_RMIA || [];
   var DAY_NAMES = ["THỨ HAI", "THỨ 3", "THỨ 4", "THỨ 5", "THỨ 6", "THỨ 7", "CHỦ NHẬT"];
   var DAY_SHORT = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
@@ -26,7 +25,6 @@
   var SESSION_START = { 1: "08:00", 2: "14:00", 3: "18:00" };
 
   var store = { version: 1, categories: [], events: [] };
-  var sha = null;
   var token = null;
   var state = { view: "overview", weekFrom: null, classIndex: 0 };
   var editingId = null;
@@ -607,70 +605,65 @@
     n.textContent = token ? "Đang ở chế độ biên tập · bấm vào công việc để sửa, bấm “+” ở ô để thêm" : "";
   }
 
-  /* ---------- GitHub Contents API ---------- */
-  function b64encode(str) {
-    var bytes = new TextEncoder().encode(str), bin = "";
-    for (var i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
-    return btoa(bin);
-  }
-  function b64decode(b64) {
-    var bin = atob(String(b64).replace(/\s/g, "")), bytes = new Uint8Array(bin.length);
-    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-    return new TextDecoder().decode(bytes);
-  }
-  var NO_WRITE_MSG = "Mã truy cập mới có quyền đọc, chưa có quyền ghi. Hãy tạo lại mã: Repository access chọn “Only select repositories” → Phuc-nguyen-work; Permissions → Repository permissions → Contents chọn “Read and write”.";
+  /* ---------- Firebase (Firestore + Auth) ---------- */
+  var FB = CFG.firebase || {};
+  var ST = CFG.store || { metaPath: "pnw/meta", eventsPath: "pnw/meta/events" };
+  var db = null, auth = null;
+  try {
+    firebase.initializeApp(FB);
+    db = firebase.firestore();
+    auth = firebase.auth();
+  } catch (e) { console.error("Firebase init", e); }
 
-  // Thử quyền ghi mà không đổi dữ liệu: gửi lệnh ghi với mã phiên bản (sha) cố ý sai.
-  // Có quyền ghi → GitHub báo xung đột (409/422); không có quyền → 403/404.
-  function probeWrite(tk) {
-    var body = JSON.stringify({ message: "kiểm tra quyền ghi", content: "", sha: "0000000000000000000000000000000000000000", branch: GH.branch });
-    return ghFetch("/contents/" + GH.dataPath, { method: "PUT", body: body }, tk).then(function (res) {
-      if (res.status === 409 || res.status === 422) return true;
-      if (res.status === 401) throw new Error("Mã truy cập không hợp lệ hoặc đã hết hạn.");
-      if (res.status === 403 || res.status === 404) throw new Error(NO_WRITE_MSG);
-      if (res.ok) return true;
-      throw new Error("Không kiểm tra được quyền ghi (mã lỗi " + res.status + ").");
-    });
+  function fbError(x, fallback) {
+    var c = (x && x.code) || "";
+    if (c === "permission-denied") return "Tài khoản này không có quyền ghi. Hãy đăng nhập bằng tài khoản admin.";
+    if (c === "unavailable") return "Mất kết nối tới máy chủ dữ liệu. Kiểm tra mạng rồi thử lại.";
+    if (/auth\/(invalid-credential|wrong-password|user-not-found|invalid-email)/.test(c)) return "Email hoặc mật khẩu chưa đúng.";
+    if (c === "auth/too-many-requests") return "Đăng nhập sai quá nhiều lần. Hãy chờ ít phút rồi thử lại.";
+    return fallback + (c ? " (" + c + ")" : "");
   }
 
-  function apiUrl(path) { return "https://api.github.com/repos/" + GH.owner + "/" + GH.repo + path; }
-  function ghFetch(path, opt, tk) {
-    opt = opt || {};
-    var headers = { "Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28", "Authorization": "Bearer " + (tk || token) };
-    if (opt.body) headers["Content-Type"] = "application/json";
-    return fetch(apiUrl(path), { method: opt.method || "GET", headers: headers, body: opt.body, cache: "no-store" });
-  }
-  function ghError(res, fallback) {
-    if (res.status === 401) return "Mã truy cập không hợp lệ hoặc đã hết hạn. Hãy bật lại chế độ biên tập với mã mới.";
-    if (res.status === 403 || res.status === 404) return NO_WRITE_MSG;
-    return fallback + " (mã lỗi " + res.status + ").";
-  }
+  function clean(o) { var r = {}; Object.keys(o).forEach(function (k) { if (o[k] !== undefined) r[k] = o[k]; }); return r; }
+
+  // Đọc toàn bộ dữ liệu từ Firestore: null nếu chưa có dữ liệu (chưa chuyển)
   function readRemote() {
-    return ghFetch("/contents/" + GH.dataPath + "?ref=" + encodeURIComponent(GH.branch)).then(function (res) {
-      if (!res.ok) throw new Error(ghError(res, "Không đọc được dữ liệu trên GitHub"));
-      return res.json();
-    }).then(function (j) {
-      return { data: normalize(JSON.parse(b64decode(j.content))), sha: j.sha };
+    if (!db) return Promise.reject(new Error("Chưa tải được thư viện Firebase"));
+    return Promise.all([db.doc(ST.metaPath).get(), db.collection(ST.eventsPath).get()]).then(function (r) {
+      if (!r[0].exists) return null;
+      var meta = r[0].data();
+      var events = r[1].docs.map(function (d) { return d.data(); });
+      return normalize({ version: meta.version || 1, updated: meta.updated || "", categories: meta.categories || [], events: events });
     });
   }
 
-  // Ghi một thay đổi: đọc bản mới nhất, áp dụng thay đổi, ghi lại; thử lại một lần nếu xung đột
-  function commit(mutate, message, attempt) {
-    attempt = attempt || 1;
-    return readRemote().then(function (cur) {
-      var data = cur.data;
-      mutate(data);
-      data.updated = new Date().toISOString();
-      var body = JSON.stringify({ message: message, content: b64encode(JSON.stringify(data, null, 2) + "\n"), sha: cur.sha, branch: GH.branch });
-      return ghFetch("/contents/" + GH.dataPath, { method: "PUT", body: body }).then(function (res) {
-        if ((res.status === 409 || res.status === 422) && attempt < 2) return commit(mutate, message, attempt + 1);
-        if (!res.ok) throw new Error(ghError(res, "Không lưu được lên GitHub"));
-        return res.json().then(function (j) {
-          store = data; sha = j.content && j.content.sha;
-          return data;
-        });
-      });
+  // Ghi một thay đổi: áp dụng lên bản sao, so sánh với dữ liệu hiện tại và chỉ ghi phần thay đổi
+  function commit(mutate) {
+    if (!db) return Promise.reject(new Error("Chưa kết nối được máy chủ dữ liệu. Tải lại trang rồi thử lại."));
+    var before = JSON.parse(JSON.stringify(store));
+    var data = JSON.parse(JSON.stringify(store));
+    mutate(data);
+    data.updated = new Date().toISOString();
+    var batch = db.batch();
+    var oldMap = {};
+    before.events.forEach(function (e) { oldMap[e.id] = JSON.stringify(e); });
+    var newIds = {};
+    data.events.forEach(function (e) {
+      newIds[e.id] = true;
+      if (oldMap[e.id] !== JSON.stringify(e)) batch.set(db.collection(ST.eventsPath).doc(e.id), clean(e));
     });
+    before.events.forEach(function (e) { if (!newIds[e.id]) batch.delete(db.collection(ST.eventsPath).doc(e.id)); });
+    batch.set(db.doc(ST.metaPath), { version: data.version || 1, updated: data.updated, categories: data.categories });
+    return batch.commit().then(function () { store = data; return data; })
+      .catch(function (x) { throw new Error(fbError(x, "Không lưu được dữ liệu")); });
+  }
+
+  // Chuyển dữ liệu cũ (events.json trên GitHub) lên Firestore — chạy một lần khi admin đăng nhập lần đầu
+  function migrateFrom(legacy) {
+    var batch = db.batch();
+    legacy.events.forEach(function (e) { batch.set(db.collection(ST.eventsPath).doc(e.id), clean(e)); });
+    batch.set(db.doc(ST.metaPath), { version: legacy.version || 1, updated: new Date().toISOString(), categories: legacy.categories, migratedFrom: "github events.json" });
+    return batch.commit();
   }
 
   function normalize(d) {
@@ -777,7 +770,7 @@
       history.replaceState(historyState(), "", "#" + state.view);
     }
     render();
-    toast(msg + " Trang công khai cập nhật sau khoảng 1–2 phút.", "ok");
+    toast(msg + "", "ok");
   }
 
   form.addEventListener("submit", function (e) {
@@ -846,22 +839,20 @@
     b.addEventListener("click", function () { b.closest("dialog").close(); });
   });
 
-  /* ---------- Bật, tắt chế độ biên tập ---------- */
-  function readToken() { try { return localStorage.getItem(TOKEN_KEY); } catch (e) { return null; } }
-  function saveToken(t) { try { if (t) localStorage.setItem(TOKEN_KEY, t); else localStorage.removeItem(TOKEN_KEY); } catch (e) { /* bỏ qua */ } }
-
+  /* ---------- Đăng nhập admin = chế độ biên tập ---------- */
+  // "token" giữ tài khoản admin đang đăng nhập (null = người xem). Firebase tự nhớ đăng nhập trên máy này.
   function updateEditorToggle() {
     var b = $("#editorToggle");
     b.textContent = token ? "THOÁT BIÊN TẬP" : "BIÊN TẬP";
     b.classList.toggle("on", !!token);
+    $("#backupJson").hidden = !token;
     setSyncNote();
   }
 
   $("#editorToggle").addEventListener("click", function () {
     if (token) {
-      if (!window.confirm("Thoát chế độ biên tập trên máy này? Mã truy cập sẽ được xóa khỏi trình duyệt.")) return;
-      token = null; saveToken(null);
-      updateEditorToggle(); render();
+      if (!window.confirm("Thoát chế độ biên tập (đăng xuất) trên máy này?")) return;
+      if (auth) auth.signOut();
       return;
     }
     $("#tokenForm").reset();
@@ -871,46 +862,76 @@
 
   $("#tokenForm").addEventListener("submit", function (e) {
     e.preventDefault();
-    var tk = this.elements.token.value.trim();
-    if (!tk) { $("#tokenError").textContent = "Chưa dán mã truy cập."; return; }
-    $("#tokenError").textContent = "Đang kiểm tra quyền…";
-    ghFetch("", {}, tk).then(function (res) {
-      if (!res.ok) throw new Error(ghError(res, "Không kiểm tra được mã truy cập"));
-      return res.json();
-    }).then(function (repo) {
-      if (repo.permissions && repo.permissions.push === false) throw new Error(NO_WRITE_MSG);
-      return probeWrite(tk);
-    }).then(function () {
-      token = tk; saveToken(tk);
+    var email = this.elements.email.value.trim(), pass = this.elements.password.value;
+    if (!email || !pass) { $("#tokenError").textContent = "Nhập email và mật khẩu admin."; return; }
+    if (!auth) { $("#tokenError").textContent = "Chưa tải được thư viện đăng nhập. Kiểm tra mạng rồi tải lại trang."; return; }
+    $("#tokenError").textContent = "Đang đăng nhập…";
+    auth.signInWithEmailAndPassword(email, pass).then(function () {
       $("#tokenDialog").close();
-      updateEditorToggle();
-      return loadFromGitHub().then(function () { toast("Đã bật chế độ biên tập.", "ok"); });
-    }).catch(function (x) { $("#tokenError").textContent = x.message || "Không bật được chế độ biên tập."; });
+      toast("Đã bật chế độ biên tập.", "ok");
+    }).catch(function (x) { $("#tokenError").textContent = fbError(x, "Không đăng nhập được."); });
+  });
+
+  // Tải bản sao lưu toàn bộ dữ liệu (JSON) về máy
+  $("#backupJson").addEventListener("click", function () {
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(store, null, 2)], { type: "application/json" }));
+    a.download = "pnw-sao-luu-" + todayISO() + ".json";
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
   });
 
   /* ---------- Tải dữ liệu ---------- */
-  function loadPublic() {
-    return fetch("./data/events.json?t=" + Date.now(), { cache: "no-store" }).then(function (res) {
+  var legacy = null;
+  function loadLegacy() {
+    return fetch(CFG.legacyDataPath + "?t=" + Date.now(), { cache: "no-store" }).then(function (res) {
       if (!res.ok) throw new Error("load");
       return res.json();
-    }).then(function (d) { store = normalize(d); });
+    }).then(function (d) { legacy = normalize(d); return legacy; });
   }
-  function loadFromGitHub() {
-    return readRemote().then(function (cur) { store = cur.data; sha = cur.sha; render(); return probeWrite(token); })
-      .catch(function (x) {
-        if (x.message === NO_WRITE_MSG || /không hợp lệ/.test(x.message || "")) { token = null; saveToken(null); updateEditorToggle(); render(); }
-        toast(x.message || "Không đọc được dữ liệu từ GitHub.", "error");
+  function loadPublic() {
+    return readRemote().then(function (d) {
+      if (d) { store = d; return; }
+      // Firestore chưa có dữ liệu: hiển thị tạm bản cũ trên GitHub
+      return loadLegacy().then(function (l) { store = JSON.parse(JSON.stringify(l)); });
+    }).catch(function (x) {
+      console.warn("Firestore", x);
+      return loadLegacy().then(function (l) { store = JSON.parse(JSON.stringify(l)); toast("Đang hiển thị bản dự phòng (chưa kết nối được máy chủ dữ liệu).", "error"); });
+    });
+  }
+  function ensureMigrated() {
+    return db.doc(ST.metaPath).get().then(function (snap) {
+      if (snap.exists) return false;
+      return (legacy ? Promise.resolve(legacy) : loadLegacy()).then(function (l) {
+        return migrateFrom(l).then(function () { return true; });
       });
+    });
   }
 
   initStatsControls();
-  token = readToken();
+  token = null;
   updateEditorToggle();
   var startView = location.hash.slice(1) || "overview";
+  var started = false;
   loadPublic().catch(function () {
     toast("Chưa tải được dữ liệu lịch. Hãy tải lại trang.", "error");
   }).then(function () {
+    started = true;
     activate(startView, "replace");
-    if (token) loadFromGitHub();
+  });
+
+  if (auth) auth.onAuthStateChanged(function (user) {
+    var isAdmin = !!user && (!CFG.adminUid || user.uid === CFG.adminUid);
+    if (user && !isAdmin) { auth.signOut(); toast("Tài khoản này không phải admin.", "error"); return; }
+    token = isAdmin ? user : null;
+    updateEditorToggle();
+    if (!token) { if (started) render(); return; }
+    ensureMigrated().then(function (moved) {
+      return readRemote().then(function (d) {
+        if (d) store = d;
+        if (started) render();
+        if (moved) toast("Đã chuyển toàn bộ lịch cũ sang kho dữ liệu mới.", "ok");
+      });
+    }).catch(function (x) { toast(fbError(x, "Không đọc được dữ liệu"), "error"); });
   });
 })();

@@ -26,6 +26,7 @@
     <div class="pn-history-nav" role="toolbar" aria-label="Điều hướng trang">
       <span class="pn-history-label">ĐIỀU HƯỚNG</span>
       <span class="pn-history-spacer"></span>
+      <button type="button" class="editor-toggle" id="backupJson" title="Tải bản sao lưu toàn bộ lịch (JSON)" hidden>SAO LƯU</button>
       <button type="button" class="editor-toggle" id="editorToggle" title="Chế độ biên tập">BIÊN TẬP</button>
       <button type="button" data-history-back aria-label="Quay lại" title="Quay lại" disabled>‹</button>
       <button type="button" data-history-forward aria-label="Tiến tới" title="Tiến tới" disabled>›</button>
@@ -147,24 +148,26 @@
   <dialog class="pn-dialog" id="tokenDialog" aria-labelledby="tokenDialogTitle">
     <form id="tokenForm" method="dialog" novalidate>
       <h3 id="tokenDialogTitle">CHẾ ĐỘ BIÊN TẬP</h3>
-      <p>Dán mã truy cập GitHub (fine-grained token) chỉ có quyền <b>Contents: Read and write</b> cho kho <b>Phuc-nguyen-work</b>. Mã chỉ lưu trên trình duyệt của máy này, không gửi đi đâu ngoài GitHub.</p>
-      <p><a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">Tạo mã truy cập mới trên GitHub ↗</a></p>
-      <label class="field"><span class="lbl">Mã truy cập</span><input type="password" name="token" autocomplete="off" spellcheck="false" placeholder="github_pat_…">
-      </label>
+      <p>Đăng nhập bằng tài khoản admin để thêm, sửa, xóa công việc. Máy này sẽ nhớ đăng nhập cho đến khi bấm <b>THOÁT BIÊN TẬP</b>.</p>
+      <label class="field"><span class="lbl">Email admin</span><input type="email" name="email" autocomplete="username" spellcheck="false" placeholder="email@gmail.com"></label>
+      <label class="field"><span class="lbl">Mật khẩu</span><input type="password" name="password" autocomplete="current-password"></label>
       <p class="form-error" id="tokenError" role="alert"></p>
       <div class="dialog-actions">
         <span class="spacer"></span>
         <button type="button" class="tool-btn" data-close>Hủy</button>
-        <button type="submit" class="tool-btn primary">Bật biên tập</button>
+        <button type="submit" class="tool-btn primary">Đăng nhập</button>
       </div>
     </form>
   </dialog>
 
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <script src="./history-nav.js?v=20261103b"></script>
-  <script src="./config.js?v=20261103r"></script>
+  <script src="./config.js?v=20261104fb"></script>
   <script src="./rmia.js?v=20261102g"></script>
-  <script src="./app.js?v=20261103t"></script>
+  <script src="./app.js?v=20261104fb"></script>
 </body>
 </html>
