@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated": "2026-11-04T01:44:34.813Z",
+  "updated": "2026-11-04T01:47:26.645Z",
   "categories": [
     {
       "id": "teaching",
@@ -187,6 +187,15 @@
       "info": "",
       "start": "08:30",
       "end": ""
+    },
+    {
+      "id": "emw1gig6g8pbn",
+      "title": "BS quà tặng 45n",
+      "category": "other",
+      "date": "2026-11-04",
+      "mode": "deadline",
+      "location": "",
+      "info": "Đang liên hệ in túi bs -"
     }
   ]
 }
