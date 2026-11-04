@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated": "2026-11-04T01:47:39.081Z",
+  "updated": "2026-11-04T01:48:35.048Z",
   "categories": [
     {
       "id": "teaching",
@@ -49,17 +49,6 @@
       "start": "20:00",
       "end": "",
       "info": "2505LHOD",
-      "location": ""
-    },
-    {
-      "id": "e20261106a",
-      "title": "LUẬT DÂN SỰ",
-      "category": "teaching",
-      "date": "2026-11-06",
-      "mode": "time",
-      "start": "20:00",
-      "end": "",
-      "info": "2505LHOA",
       "location": ""
     },
     {
