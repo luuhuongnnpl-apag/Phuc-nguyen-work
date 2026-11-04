@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated": "2026-11-04T12:58:10.594Z",
+  "updated": "2026-11-04T13:03:46.946Z",
   "categories": [
     {
       "id": "teaching",
@@ -185,6 +185,16 @@
       "info": "",
       "start": "11:05",
       "end": ""
+    },
+    {
+      "id": "emw24o8ac4f15",
+      "title": "Về quê",
+      "category": "other",
+      "date": "2026-11-07",
+      "mode": "session",
+      "location": "Bắc Giang",
+      "info": "",
+      "session": 2
     }
   ]
 }
