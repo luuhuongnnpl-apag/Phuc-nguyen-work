@@ -840,6 +840,12 @@
   });
 
   /* ---------- Đăng nhập admin = chế độ biên tập ---------- */
+  var ADMIN_EMAILS = (CFG.adminEmails || []).map(function (e) { return e.toLowerCase(); });
+  function isAdminUser(u) {
+    if (!u || u.isAnonymous) return false;
+    if (CFG.adminUid && u.uid === CFG.adminUid) return true;
+    return !!u.email && u.emailVerified !== false && ADMIN_EMAILS.indexOf(u.email.toLowerCase()) >= 0;
+  }
   // "token" giữ tài khoản admin đang đăng nhập (null = người xem). Firebase tự nhớ đăng nhập trên máy này.
   function updateEditorToggle() {
     var b = $("#editorToggle");
@@ -851,7 +857,7 @@
 
   $("#editorToggle").addEventListener("click", function () {
     if (token) {
-      if (!window.confirm("Thoát chế độ biên tập (đăng xuất) trên máy này?")) return;
+      if (!window.confirm("Đăng xuất khỏi hệ sinh thái Phúc Nguyên trên máy này? (PN Library, PN Work, PN Digital cùng đăng xuất)")) return;
       if (auth) auth.signOut();
       return;
     }
@@ -866,9 +872,20 @@
     if (!email || !pass) { $("#tokenError").textContent = "Nhập email và mật khẩu admin."; return; }
     if (!auth) { $("#tokenError").textContent = "Chưa tải được thư viện đăng nhập. Kiểm tra mạng rồi tải lại trang."; return; }
     $("#tokenError").textContent = "Đang đăng nhập…";
-    auth.signInWithEmailAndPassword(email, pass).then(function () {
+    auth.signInWithEmailAndPassword(email, pass).then(function (r) {
+      if (!isAdminUser(r.user)) throw { code: "not-admin" };
       $("#tokenDialog").close();
       toast("Đã bật chế độ biên tập.", "ok");
+    }).catch(function (x) { $("#tokenError").textContent = x && x.code === "not-admin" ? "Tài khoản này không phải quản trị." : fbError(x, "Không đăng nhập được."); });
+  });
+  $("#googleLogin").addEventListener("click", function () {
+    if (!auth) return;
+    $("#tokenError").textContent = "Đang mở cửa sổ đăng nhập Google…";
+    var prov = new firebase.auth.GoogleAuthProvider();
+    prov.setCustomParameters({ prompt: "select_account" });
+    auth.signInWithPopup(prov).then(function (r) {
+      if (!isAdminUser(r.user)) { $("#tokenError").textContent = "Tài khoản " + r.user.email + " không phải quản trị (vẫn giữ đăng nhập để xem)."; return; }
+      $("#tokenDialog").close(); toast("Đã bật chế độ biên tập.", "ok");
     }).catch(function (x) { $("#tokenError").textContent = fbError(x, "Không đăng nhập được."); });
   });
 
@@ -921,8 +938,9 @@
   });
 
   if (auth) auth.onAuthStateChanged(function (user) {
-    var isAdmin = !!user && (!CFG.adminUid || user.uid === CFG.adminUid);
-    if (user && !isAdmin) { auth.signOut(); toast("Tài khoản này không phải admin.", "error"); return; }
+    // Hệ sinh thái PN dùng chung phiên đăng nhập (cùng tên miền, cùng dự án Firebase):
+    // không bao giờ tự đăng xuất tài khoản khác — chỉ coi là người xem.
+    var isAdmin = isAdminUser(user);
     token = isAdmin ? user : null;
     updateEditorToggle();
     if (!token) { if (started) render(); return; }
