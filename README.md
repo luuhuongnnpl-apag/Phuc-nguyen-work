@@ -16,7 +16,7 @@ https://luuhuongnnpl-apag.github.io/Phuc-nguyen-work/
 - Số tiết: khoảng 1 giờ = 1 tiết, làm tròn đến tiết gần nhất. Nhập ô “Số tiết” để ghi đè (ví dụ buổi cả ngày có nghỉ trưa). Việc thiếu giờ kết thúc được đánh dấu “chưa đủ giờ”.
 
 ## Thêm, sửa, xóa công việc (chế độ biên tập)
-1. Bấm **BIÊN TẬP**, đăng nhập bằng email và mật khẩu admin (tài khoản Firebase Authentication). Máy sẽ nhớ đăng nhập.
+1. Bấm **BIÊN TẬP** → **Đăng nhập Google** bằng tài khoản quản trị duy nhất luuhuong.nnpl@gmail.com (dùng chung cho cả hệ sinh thái Phúc Nguyên). Máy sẽ nhớ đăng nhập.
 2. Thêm việc bằng nút **+ Thêm công việc** hoặc nút **+** ở từng ô. Bấm vào một công việc để sửa, xóa hoặc nhân bản.
 3. Lưu xong là trang công khai thấy ngay (không phải chờ GitHub cập nhật).
 4. Nút **SAO LƯU** (chỉ hiện khi đăng nhập) tải toàn bộ lịch về máy dạng JSON.

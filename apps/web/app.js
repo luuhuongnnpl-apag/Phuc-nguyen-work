@@ -619,8 +619,7 @@
     var c = (x && x.code) || "";
     if (c === "permission-denied") return "Tài khoản này không có quyền ghi. Hãy đăng nhập bằng tài khoản admin.";
     if (c === "unavailable") return "Mất kết nối tới máy chủ dữ liệu. Kiểm tra mạng rồi thử lại.";
-    if (/auth\/(invalid-credential|wrong-password|user-not-found|invalid-email)/.test(c)) return "Email hoặc mật khẩu chưa đúng.";
-    if (c === "auth/too-many-requests") return "Đăng nhập sai quá nhiều lần. Hãy chờ ít phút rồi thử lại.";
+    if (c === "auth/unauthorized-domain") return "Tên miền này chưa được phép đăng nhập Google (thêm vào Authorized domains trên Firebase).";
     return fallback + (c ? " (" + c + ")" : "");
   }
 
@@ -857,36 +856,34 @@
 
   $("#editorToggle").addEventListener("click", function () {
     if (token) {
-      if (!window.confirm("Đăng xuất khỏi hệ sinh thái Phúc Nguyên trên máy này? (PN Library, PN Work, PN Digital cùng đăng xuất)")) return;
+      if (!window.confirm("Đăng xuất khỏi hệ sinh thái Phúc Nguyên trên máy này? (các trang Phúc Nguyên cùng đăng xuất)")) return;
       if (auth) auth.signOut();
       return;
     }
-    $("#tokenForm").reset();
     $("#tokenError").textContent = "";
     $("#tokenDialog").showModal();
   });
 
-  $("#tokenForm").addEventListener("submit", function (e) {
-    e.preventDefault();
-    var email = this.elements.email.value.trim(), pass = this.elements.password.value;
-    if (!email || !pass) { $("#tokenError").textContent = "Nhập email và mật khẩu admin."; return; }
-    if (!auth) { $("#tokenError").textContent = "Chưa tải được thư viện đăng nhập. Kiểm tra mạng rồi tải lại trang."; return; }
-    $("#tokenError").textContent = "Đang đăng nhập…";
-    auth.signInWithEmailAndPassword(email, pass).then(function (r) {
-      if (!isAdminUser(r.user)) throw { code: "not-admin" };
-      $("#tokenDialog").close();
-      toast("Đã bật chế độ biên tập.", "ok");
-    }).catch(function (x) { $("#tokenError").textContent = x && x.code === "not-admin" ? "Tài khoản này không phải quản trị." : fbError(x, "Không đăng nhập được."); });
-  });
+  $("#tokenForm").addEventListener("submit", function (e) { e.preventDefault(); });
+  // Đăng nhập duy nhất: Google, tài khoản luuhuong.nnpl@gmail.com
   $("#googleLogin").addEventListener("click", function () {
-    if (!auth) return;
+    if (!auth) { $("#tokenError").textContent = "Chưa tải được thư viện đăng nhập. Kiểm tra mạng rồi tải lại trang."; return; }
     $("#tokenError").textContent = "Đang mở cửa sổ đăng nhập Google…";
     var prov = new firebase.auth.GoogleAuthProvider();
-    prov.setCustomParameters({ prompt: "select_account" });
+    prov.setCustomParameters({ prompt: "select_account", login_hint: ADMIN_EMAILS[0] || "" });
     auth.signInWithPopup(prov).then(function (r) {
-      if (!isAdminUser(r.user)) { $("#tokenError").textContent = "Tài khoản " + r.user.email + " không phải quản trị (vẫn giữ đăng nhập để xem)."; return; }
+      if (!isAdminUser(r.user)) {
+        var em = r.user.email;
+        auth.signOut();
+        $("#tokenError").textContent = "Tài khoản " + em + " không phải quản trị. Hãy chọn " + (ADMIN_EMAILS[0] || "tài khoản quản trị") + ".";
+        return;
+      }
       $("#tokenDialog").close(); toast("Đã bật chế độ biên tập.", "ok");
-    }).catch(function (x) { $("#tokenError").textContent = fbError(x, "Không đăng nhập được."); });
+    }).catch(function (x) {
+      var c = (x && x.code) || "";
+      if (c === "auth/popup-blocked" || c === "auth/operation-not-supported-in-this-environment") { auth.signInWithRedirect(prov); return; }
+      $("#tokenError").textContent = c === "auth/popup-closed-by-user" || c === "auth/cancelled-popup-request" ? "Cửa sổ đăng nhập đã đóng." : fbError(x, "Không đăng nhập được.");
+    });
   });
 
   // Tải bản sao lưu toàn bộ dữ liệu (JSON) về máy

@@ -16,8 +16,8 @@ window.PNW_CONFIG = Object.freeze({
   legacyDataPath: "./data/events.json",
   // Tài khoản admin duy nhất được biên tập (luuhuong.nnpl@gmail.com)
   adminUid: "smoIpuX7qseqTeu9nToc9RYigku1",
-  // Đăng nhập Google bằng các email này cũng là quản trị (dùng chung cho cả hệ sinh thái PN)
-  adminEmails: ["luuhuong.nnpl@gmail.com", "luuhuong.dhnv@gmail.com"],
+  // Quản trị duy nhất của toàn hệ sinh thái Phúc Nguyên: đăng nhập Google bằng email này
+  adminEmails: ["luuhuong.nnpl@gmail.com"],
   // Quy đổi: khoảng 1 giờ = 1 tiết (làm tròn đến tiết gần nhất).
   minutesPerLesson: 60
 });

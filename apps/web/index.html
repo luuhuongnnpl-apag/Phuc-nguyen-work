@@ -148,15 +148,12 @@
   <dialog class="pn-dialog" id="tokenDialog" aria-labelledby="tokenDialogTitle">
     <form id="tokenForm" method="dialog" novalidate>
       <h3 id="tokenDialogTitle">CHẾ ĐỘ BIÊN TẬP</h3>
-      <p>Đăng nhập bằng tài khoản admin để thêm, sửa, xóa công việc. Đăng nhập một lần là dùng chung cho cả PN Library, PN Work, PN Digital trên máy này, cho đến khi bấm <b>THOÁT BIÊN TẬP</b>.</p>
-      <label class="field"><span class="lbl">Email admin</span><input type="email" name="email" autocomplete="username" spellcheck="false" placeholder="email@gmail.com"></label>
-      <label class="field"><span class="lbl">Mật khẩu</span><input type="password" name="password" autocomplete="current-password"></label>
+      <p>Đăng nhập bằng Google với tài khoản quản trị <b>luuhuong.nnpl@gmail.com</b>. Đăng nhập một lần là dùng chung cho toàn hệ sinh thái Phúc Nguyên trên máy này, cho đến khi bấm <b>THOÁT BIÊN TẬP</b>.</p>
       <p class="form-error" id="tokenError" role="alert"></p>
       <div class="dialog-actions">
         <span class="spacer"></span>
         <button type="button" class="tool-btn" data-close>Hủy</button>
-        <button type="button" class="tool-btn" id="googleLogin">Đăng nhập Google</button>
-        <button type="submit" class="tool-btn primary">Đăng nhập</button>
+        <button type="button" class="tool-btn primary" id="googleLogin">Đăng nhập Google</button>
       </div>
     </form>
   </dialog>
@@ -167,8 +164,8 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <script src="./history-nav.js?v=20261103b"></script>
-  <script src="./config.js?v=20261105s"></script>
+  <script src="./config.js?v=20261109a"></script>
   <script src="./rmia.js?v=20261102g"></script>
-  <script src="./app.js?v=20261105s"></script>
+  <script src="./app.js?v=20261109a"></script>
 </body>
 </html>
